@@ -30,8 +30,35 @@
         crossorigin="anonymous"></script>
     <script>
 
+        const MASK = 0x0003FFFF;
+        const MAX_DMA = 124;
+        const DMA_MASK = ~3;
+
+        const START_DATA = {
+            "Emerald": {start: "0x02029808", do: true},
+            "FRLG": {start: "0x02029314", do: true},
+            "RS": {start: "0x020300A0", do: false}
+        }
+
+        let current_info_container_bg = undefined;
+
         function validTheme(theme) {
             return theme == "light" || theme == "dark";
+        }
+
+        function manualThemeUpdates(dark_mode) {
+            let element = document.getElementById("theme-switch");
+            if(element)
+                element.checked = dark_mode;
+            element = document.getElementById("msg-container");
+            if(current_info_container_bg && element) {
+                element.classList.remove(current_info_container_bg);
+                if(dark_mode)
+                    current_info_container_bg = current_info_container_bg.replaceAll("-subtle", "");
+                else
+                    current_info_container_bg += "-subtle";
+                element.classList.add(current_info_container_bg);
+            }
         }
 
         function loadTheme(theme) {
@@ -39,9 +66,7 @@
                 return;
             setStoredTheme(theme);
             document.documentElement.setAttribute("data-bs-theme", theme);
-            let theme_switch = document.getElementById("theme-switch");
-            if(theme_switch)
-                theme_switch.checked = theme == "dark";
+            manualThemeUpdates(theme == "dark");
         }
 
         function getStoredTheme() {
@@ -61,76 +86,6 @@
         
         loadDefaultTheme();
 
-    </script>
-</head>
-<html lang="en">
-    <body class="bg-body text-center">
-        <div class="header container-fluid d-flex flex-row align-items-center justify-content-between pt-3">
-            <div class="ps-3"></div>
-            <h1>WhichBox</h1>
-            <div class="d-flex flex-row justify-content-end pe-3">
-                <label onclick="loadTheme('light')">Light</label>
-                <div class="form-check form-switch ms-2">
-                    <input class="form-check-input" id="theme-switch"
-                        onchange="loadTheme(event.target.checked? 'dark': 'light')"
-                        type="checkbox" role="switch" aria-label="Color Theme"/>
-                </div>
-                <label onclick="loadTheme('dark')">Dark</label>
-            </div>
-        </div>
-        <div class="generator container-xl row m-auto align-items-center mt-5">
-            <div class="col-12 col-lg">
-                <div class="row align-items-center">
-                    <div class="col-6 text-start">
-                        <div class="dropdown">
-                            <button type="button" id="start-selector" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Emerald</button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" title="Emerald" onclick="selectStart('emerald')">Emerald</a></li>
-                                <li><a class="dropdown-item" href="#" title="FRLG" onclick="selectStart('frlg')">FRLG</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="col-6 form-floating mt-2">
-                        <input type="text" class="form-control text-end" id="start-input" placeholder="0x00000000" value="0x02029808"/>
-                        <label for="start-input">Start</label>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 form-floating mt-2 ms-auto">
-                        <input type="text" class="form-control text-end" id="address-input" placeholder="0x00000000" value="0x02029808"/>
-                        <label for="address-input">Address</label>
-                    </div>
-                </div>
-                <div class="row align-items-center">
-                    <div class="col-6 form-check form-switch mt-2 text-start">
-                        <input type="checkbox" class="form-check-input" id="full-range-check" role="switch" checked onchange="changeFullRange(event.target.checked)"/>
-                        <label for="full-range-check" class="form-check-label">Full range</label>
-                    </div>
-                    <div class="col-6 form-floating mt-2">
-                        <input type="number" class="form-control text-end" id="dma-offset" placeholder="000" value="0" min="0" max="124" step="4" disabled/>
-                        <label for="dma-offset">DMA Offset</label>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 col-lg my-5">
-                <button class="btn btn-primary" type="button" onclick="calculate()">Calculate</button>
-            </div>
-            <div id="result-container" class="col-12 col-lg h-100 text-center border border-1 border-secondary rounded-4 px-0 py-2 fs-4"></div>
-        </div>
-        <div id="msg-container" class="container text-center border border-1 border-secondary rounded-4 mt-4 fs-4 align-items-center">
-            <div id="msg-text" class="py-2"></div>
-        </div>
-    </body>
-    <script>
-
-        const MASK = 0x0003FFFF;
-        const EM_START = 0x02029808;
-        const FRLG_START = 0x02029314;
-        const MAX_DMA = 124;
-        const DMA_MASK = ~3;
-
-        let current_info_container_bg = undefined;
-
         function formatToHex(num, digits, prefix) {
             prefix = prefix?? "";
             digits = digits?? 0;
@@ -138,12 +93,11 @@
         }
 
         function selectStart(type) {
-            if(type == "emerald") {
-                document.getElementById("start-selector").innerHTML = "Emerald";
-                document.getElementById("start-input").value = formatToHex(EM_START, 8, "0x");
-            } else if(type == "frlg") {
-                document.getElementById("start-selector").innerHTML = "FRLG";
-                document.getElementById("start-input").value = formatToHex(FRLG_START, 8, "0x");
+            if(type in START_DATA) {
+                const data = START_DATA[type];
+                document.getElementById("start-selector").innerHTML = type;
+                document.getElementById("start-input").value = data.start;
+                document.getElementById("off-row").hidden = !data.do;
             }
         }
 
@@ -184,11 +138,14 @@
                 return;
             }
             document.getElementById("msg-container").hidden = true;
+            current_info_container_bg = undefined;
             o &= MASK;
             s &= MASK;
-            let result = document.getElementById("full-range-check").checked?
-                "From " + whichbox(o - s - MAX_DMA) + " to " + whichbox(o - s):
-                whichbox(o - s - (document.getElementById("dma-offset").value & DMA_MASK))
+            let result = document.getElementById("start-selector").innerHTML == "RS"?
+                whichbox(o - s):
+                document.getElementById("full-range-check").checked?
+                    "From " + whichbox(o - s - MAX_DMA) + " to " + whichbox(o - s):
+                    whichbox(o - s - (document.getElementById("dma-offset").value & DMA_MASK));
             document.getElementById("result-container").innerHTML = result;
         }
         
@@ -198,4 +155,62 @@
         });
 
     </script>
+</head>
+<html lang="en">
+    <body class="bg-body text-center">
+        <div class="header container-fluid d-flex flex-row align-items-center justify-content-between py-3 border-bottom border-secondary">
+            <div class="ps-3"></div>
+            <h1>WhichBox</h1>
+            <div class="d-flex flex-row justify-content-end pe-3">
+                <label onclick="loadTheme('light')">Light</label>
+                <div class="form-check form-switch ms-2">
+                    <input class="form-check-input" id="theme-switch"
+                        onchange="loadTheme(event.target.checked? 'dark': 'light')"
+                        type="checkbox" role="switch" aria-label="Color Theme"/>
+                </div>
+                <label onclick="loadTheme('dark')">Dark</label>
+            </div>
+        </div>
+        <div class="generator container-xl row m-auto align-items-center mt-5">
+            <div class="col-12 col-lg">
+                <div class="row">
+                    <div class="col-6 form-floating mt-2 ms-auto">
+                        <input type="text" class="form-control text-end" id="address-input" placeholder="0x00000000" value="0x020300A0"/>
+                        <label for="address-input">Address</label>
+                    </div>
+                </div>
+                <div class="row align-items-center">
+                    <div class="col-6 text-start">
+                        <div class="dropdown">
+                            <button type="button" id="start-selector" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Emerald</button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" id="start-emerald" href="#start-emerald" title="Emerald" onclick="selectStart('Emerald')">Emerald</a></li>
+                                <li><a class="dropdown-item" id="start-frlg" href="#start-frlg" title="FRLG" onclick="selectStart('FRLG')">FRLG</a></li>
+                                <li><a class="dropdown-item" id="start-rs" href="#start-rs" title="RS" onclick="selectStart('RS')">RS</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-6 form-floating mt-2">
+                        <input type="text" class="form-control text-end" id="start-input" placeholder="0x00000000" value="0x02029808"/>
+                        <label for="start-input">Start</label>
+                    </div>
+                </div>
+                <div id="off-row" class="row align-items-center">
+                    <div class="col-6 form-check form-switch mt-2 text-start">
+                        <input type="checkbox" class="form-check-input" id="full-range-check" role="switch" checked onchange="changeFullRange(event.target.checked)"/>
+                        <label for="full-range-check" class="form-check-label">Full range</label>
+                    </div>
+                    <div class="col-6 form-floating mt-2">
+                        <input type="number" class="form-control text-end" id="dma-offset" placeholder="000" value="0" min="0" max="124" step="4" disabled/>
+                        <label for="dma-offset">DMA Offset</label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg my-5"><button class="btn btn-primary" type="button" onclick="calculate()">Calculate</button></div>
+            <div id="result-container" class="col-12 col-lg h-100 text-center border border-1 border-secondary rounded-4 px-0 py-2 fs-4"></div>
+        </div>
+        <div id="msg-container" class="container text-center border border-1 border-secondary rounded-4 mt-4 fs-4 align-items-center">
+            <div id="msg-text" class="py-2"></div>
+        </div>
+    </body>
 </html>
