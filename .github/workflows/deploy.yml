@@ -30,6 +30,7 @@ jobs:
           git commit -m "Generate local version (${{github.sha}})"
           git fetch origin main
           git push origin HEAD:main
+        continue-on-error: true
   deploy:
     permissions:
       contents: write
