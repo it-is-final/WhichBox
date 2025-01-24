@@ -1,0 +1,52 @@
+name: Deploy
+run-name: Deploy commit ${{github.sha}}
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '_site/index.html'
+      - '_site/styles.css'
+      - '_site/functions.js'
+      - 'scripts/generate_local_version.sh'
+      - '.github/workflows/deploy.yml'
+jobs:
+  generate_local_version:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Generate Single File
+        run: ./scripts/generate_local_version.sh
+      - name: Update Repository
+        id: generate_single_file
+        run: |
+          git config --global user.name 'Automated WhichBox SingleFile'
+          git config --global user.email 'automated-whichbox-singlefile@users.noreply.github.com'
+          git remote set-url origin https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/$GITHUB_REPOSITORY
+          git add -f local_version/index-full.html
+          git commit -m "Generate local version (${{github.sha}})"
+          git fetch origin main
+          git push origin HEAD:main
+  deploy:
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{steps.deploy_pages.outputs.page_url}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Upload Artifact
+        id: upload_pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Deploy GitHubPage
+        id: deploy_pages
+        uses: actions/deploy-pages@v4
