@@ -1,0 +1,40 @@
+body {
+    min-height: 90vh;
+}
+
+div.header {
+    min-height: 10vh;
+}
+
+div.header > div {
+    width: max(20%, 200px);
+}
+
+div.header > h1 {
+    width: min(60%, calc(100% - 400px));
+}
+
+div#content-container {
+    min-height: 80vh;
+}
+
+div#result-container,
+div#inverse-result-container,
+div#msg-container,
+div#inverse-msg-container {
+    min-height: 5vh;
+}
+
+footer {
+    margin-top: 100vh;
+    min-height: 10vh;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield; /* No arrows */
+}
+
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}

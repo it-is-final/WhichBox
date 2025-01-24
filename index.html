@@ -4,166 +4,17 @@
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1"/>
         <title>WhichBox</title>
-        <style>
-            body {
-                min-height: 90vh;
-            }
-            div.header {
-                min-height: 10vh;
-            }
-            div.header > div {
-                width: max(20%, 200px);
-            }
-            div.header > h1 {
-                width: min(60%, calc(100% - 400px));
-            }
-            div#content-container {
-                min-height: 80vh;
-            }
-            div#result-container,
-            div#msg-container {
-                min-height: 5vh;
-            }
-            footer {
-                min-height: 10vh;
-            }
-        </style>
+        <link href="styles.css" rel="stylesheet"/>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
             integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
             rel="stylesheet" crossorigin="anonymous"/>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
             integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
             crossorigin="anonymous"></script>
-        <script>
-
-            const MASK = 0x0003FFFF;
-            const MAX_DMA = 124;
-            const DMA_MASK = ~3;
-
-            const START_DATA = {
-                "Emerald": {start: "0x0202980C", do: true},
-                "FRLG": {start: "0x02029318", do: true},
-                "RS": {start: "0x020300A4", do: false}
-            }
-
-            let current_info_container_bg = undefined;
-
-            function validTheme(theme) {
-                return theme == "light" || theme == "dark";
-            }
-
-            function manualThemeUpdates(dark_mode) {
-                let element = document.getElementById("theme-switch");
-                if(element)
-                    element.checked = dark_mode;
-                element = document.getElementById("msg-container");
-                if(current_info_container_bg && element) {
-                    element.classList.remove(current_info_container_bg);
-                    if(dark_mode)
-                        current_info_container_bg = current_info_container_bg.replaceAll("-subtle", "");
-                    else
-                        current_info_container_bg += "-subtle";
-                    element.classList.add(current_info_container_bg);
-                }
-            }
-
-            function loadTheme(theme) {
-                if(!validTheme(theme))
-                    return;
-                setStoredTheme(theme);
-                document.documentElement.setAttribute("data-bs-theme", theme);
-                manualThemeUpdates(theme == "dark");
-            }
-
-            function getStoredTheme() {
-                return localStorage.getItem("theme");
-            }
-
-            function setStoredTheme(theme) {
-                localStorage.setItem("theme", theme);
-            }
-
-            function loadDefaultTheme() {
-                let theme = getStoredTheme();
-                if(theme == null)
-                    theme = window.matchMedia("(prefers-color-scheme: dark)").matches? "dark": "light";
-                loadTheme(theme);
-            }
-            
-            loadDefaultTheme();
-
-            function formatToHex(num, digits, prefix) {
-                prefix = prefix?? "";
-                digits = digits?? 0;
-                return prefix + num.toString(16).padStart(digits, "0");
-            }
-
-            function selectStart(type) {
-                if(type in START_DATA) {
-                    const data = START_DATA[type];
-                    document.getElementById("start-selector").innerHTML = type;
-                    document.getElementById("start-input").value = data.start;
-                    document.getElementById("off-row").hidden = !data.do;
-                }
-            }
-
-            function displayMsg(msg, bg) {
-                document.getElementById("msg-text").innerHTML = msg;
-                bg = "bg-" + (bg?? "secondary");
-                let element = document.getElementById("msg-container");
-                if(current_info_container_bg)
-                    element.classList.remove(current_info_container_bg);
-                element.classList.add(bg);
-                element.hidden = false;
-                current_info_container_bg = bg;
-            }
-
-            function changeFullRange(value) {
-                document.getElementById("full-range-check").checked = value;
-                document.getElementById("dma-offset").disabled = value;
-            }
-
-            function whichbox(offset) {
-                box = Math.floor(offset / 2400) + 1;
-                offset %= 2400;
-                slot = Math.floor(offset / 80) + 1;
-                offset %= 80;
-                return "Box " + box + " - Slot " + slot + " (+" + formatToHex(offset, 2, "0x") + ")";
-            }
-
-            function calculate() {
-                const error_bg = getStoredTheme() == "dark"? "danger": "danger-subtle";
-                let s = parseInt(document.getElementById("start-input").value);
-                if(isNaN(s)) {
-                    displayMsg("Invalid start value", error_bg);
-                    return;
-                }
-                let o = parseInt(document.getElementById("address-input").value);
-                if(isNaN(o)) {
-                    displayMsg("Invalid address value", error_bg);
-                    return;
-                }
-                document.getElementById("msg-container").hidden = true;
-                current_info_container_bg = undefined;
-                o &= MASK;
-                s &= MASK;
-                let result = document.getElementById("start-selector").innerHTML == "RS"?
-                    whichbox(o - s):
-                    document.getElementById("full-range-check").checked?
-                        "From " + whichbox(o - s - MAX_DMA) + " to " + whichbox(o - s):
-                        whichbox(o - s - (document.getElementById("dma-offset").value & DMA_MASK));
-                document.getElementById("result-container").innerHTML = result;
-            }
-            
-            document.addEventListener("DOMContentLoaded", () => {
-                loadDefaultTheme();
-                document.getElementById("msg-container").hidden = true;
-            });
-
-        </script>
+        <script src="functions.js"></script>
     </head>
     <body class="bg-body text-center">
-        <div class="header container-fluid d-flex flex-row align-items-center justify-content-between py-3 border-bottom border-secondary">
+        <div class="header sticky-lg-top bg-body container-fluid d-flex flex-row align-items-center justify-content-between py-3 border-bottom border-secondary">
             <div class="ps-3"></div>
             <h1>WhichBox</h1>
             <div class="d-flex flex-row justify-content-end pe-3">
@@ -176,50 +27,92 @@
                 <label onclick="loadTheme('dark')">Dark</label>
             </div>
         </div>
-        <div id="content-container" class="d-flex align-items-center justify-content-evenly">
-            <div class="generator container-xl row m-auto align-items-center mt-5">
-                <div class="col-12 col-lg">
-                    <div class="row">
-                        <div class="col-6 form-floating mt-2 ms-auto">
-                            <input type="text" class="form-control text-end" id="address-input" placeholder="0x00000000" value="0x020300A0"/>
-                            <label for="address-input">Address</label>
-                        </div>
-                    </div>
-                    <div class="row align-items-center">
-                        <div class="col-6 text-start">
-                            <div class="dropdown">
-                                <button type="button" id="start-selector" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Emerald</button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" id="start-emerald" href="#start-emerald" title="Emerald" onclick="selectStart('Emerald')">Emerald</a></li>
-                                    <li><a class="dropdown-item" id="start-frlg" href="#start-frlg" title="FRLG" onclick="selectStart('FRLG')">FRLG</a></li>
-                                    <li><a class="dropdown-item" id="start-rs" href="#start-rs" title="RS" onclick="selectStart('RS')">RS</a></li>
-                                </ul>
+        <div id="content-container" class="d-flex flex-column align-items-center justify-content-evenly">
+            <form id="generator" class="generator container-xl row m-auto align-items-center justify-content-evenly mt-5" onsubmit="submitCalculate(event)">
+                    <div class="col-12 col-lg">
+                        <div class="row">
+                            <div class="col-6 form-floating mt-2 ms-auto">
+                                <input type="text" class="form-control text-end" name="offset" id="address-input" placeholder="0x00000000" value="0x020300A4"/>
+                                <label for="address-input">Address</label>
                             </div>
                         </div>
-                        <div class="col-6 form-floating mt-2">
-                            <input type="text" class="form-control text-end" id="start-input" placeholder="0x00000000" value="0x02029808"/>
-                            <label for="start-input">Start</label>
+                        <div class="row align-items-center">
+                            <div class="col-6 text-start form-floating">
+                                <select id="select-game" name="game" class="form-select" aria-label=".form-select-lg" onchange="selectStart(event.target.value)">
+                                    <option value="Emerald" selected>Emerald</option>
+                                    <option value="FRLG">FRLG</option>
+                                    <option value="RS">RS</option>
+                                </select>
+                                <label for="select-game">Game</label>
+                            </div>
+                            <div class="col-6 form-floating mt-2">
+                                <input type="text" class="form-control text-end" name="start" id="start-input" placeholder="0x00000000" value="0x0202980C"/>
+                                <label for="start-input">Start</label>
+                            </div>
+                        </div>
+                        <div id="off-row" class="row align-items-center">
+                            <div class="col-6 form-check form-switch mt-2 text-start">
+                                <input type="checkbox" class="form-check-input" name="full-range" id="full-range-check" role="switch" checked onchange="changeFullRange(event.target.checked)"/>
+                                <label for="full-range-check" class="form-check-label">Full range</label>
+                            </div>
+                            <div class="col-6 form-floating mt-2">
+                                <input type="number" class="form-control text-end" name="dma-offset" id="dma-offset" placeholder="000" value="0" min="0" max="124" step="4" disabled/>
+                                <label for="dma-offset">DMA Offset</label>
+                            </div>
                         </div>
                     </div>
-                    <div id="off-row" class="row align-items-center">
-                        <div class="col-6 form-check form-switch mt-2 text-start">
-                            <input type="checkbox" class="form-check-input" id="full-range-check" role="switch" checked onchange="changeFullRange(event.target.checked)"/>
-                            <label for="full-range-check" class="form-check-label">Full range</label>
-                        </div>
-                        <div class="col-6 form-floating mt-2">
-                            <input type="number" class="form-control text-end" id="dma-offset" placeholder="000" value="0" min="0" max="124" step="4" disabled/>
-                            <label for="dma-offset">DMA Offset</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-lg my-5"><button class="btn btn-primary" type="button" onclick="calculate()">Calculate</button></div>
+                    <div class="col-12 col-lg my-5"><button class="btn btn-primary" type="submit">Calculate</button></div>
                 <div id="result-container" class="col-12 col-lg h-100 text-center border border-1 border-secondary rounded-4 px-0 py-2 fs-4"></div>
-            </div>
+            </form>
             <div id="msg-container" class="container text-center border border-1 border-secondary rounded-4 mt-4 fs-4 align-items-center">
                 <div id="msg-text" class="py-2"></div>
             </div>
+            <form id="inverse-generator" class="generator container-xl row m-auto mt-5  align-items-center justify-content-evenly border-top border-1 border-secondary pt-3 pb-4" onsubmit="submitInverseCalculate(event)">
+                <h2 class="w-100 text-center p-0">WhichAddress</h2>
+                    <div class="col-12 col-lg">
+                        <div class="row align-items-center">
+                            <div class="col-6 form-floating text-start">
+                                <select id="inverse-select-name" name="inverse-game" class="form-select" aria-label=".form-select-lg" onchange="selectStart(event.target.value, 'inverse-')">
+                                    <option value="Emerald" selected>Emerald</option>
+                                    <option value="FRLG">FRLG</option>
+                                    <option value="RS">RS</option>
+                                </select>
+                                <label for="inverse-select-game">Game</label>
+                            </div>
+                            <div class="col-6 form-floating mt-2">
+                                <input type="text" class="form-control text-end" name="inverse-start" id="inverse-start-input" placeholder="0x00000000" value="0x0202980C"/>
+                                <label for="inverse-start-input">Start</label>
+                            </div>
+                        </div>
+                        <div id="inverse-off-row" class="row align-items-center">
+                            <div class="col-6 form-check form-switch mt-2 text-start">
+                                <input type="checkbox" class="form-check-input" name="inverse-full-range" id="inverse-full-range-check" role="switch" checked onchange="changeFullRange(event.target.checked, 'inverse-')"/>
+                                <label for="inverse-full-range-check" class="form-check-label">Full range</label>
+                            </div>
+                            <div class="col-6 form-floating mt-2">
+                                <input type="number" class="form-control text-end" name="inverse-dma-offset" id="inverse-dma-offset" placeholder="000" value="0" min="0" max="124" step="4" disabled/>
+                                <label for="inverse-dma-offset">DMA Offset</label>
+                            </div>
+                        </div>
+                        <div class="row align-items-center">
+                            <div class="col-6 form-floating mt-2">
+                                <input type="number" class="form-control text-end" name="inverse-box" id="inverse-box-input" placeholder="1" value="1" min="1" max="14" step="1"/>
+                                <label for="inverse-box-input">BOX</label>
+                            </div>
+                            <div class="col-6 form-floating mt-2">
+                                <input type="number" class="form-control text-end" name="inverse-slot" id="inverse-slot-input" placeholder="30" value="1" min="1" max="30" step="1"/>
+                                <label for="inverse-box-input">Slot</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg my-5"><button class="btn btn-primary" type="submit">Calculate</button></div>
+                <div id="inverse-result-container" class="col-12 col-lg h-100 text-center border border-1 border-secondary rounded-4 px-0 py-2 fs-4"></div>
+            </form>
+            <div id="inverse-msg-container" class="container text-center border border-1 border-secondary rounded-4 mt-4 fs-4 align-items-center">
+                <div id="inverse-msg-text" class="py-2"></div>
+            </div>
         </div>
-        <footer class="w-100 d-flex border-top border-secondary flex-row align-items-center justify-content-evenly pt-2 pb-3">
+        <footer class="w-100 mt-3 mt-lg-0 d-flex border-top border-secondary flex-row align-items-center justify-content-evenly pt-2 pb-3">
             <div>
                 <p class="m-0">Developed by Adrichu00</p>
                 <a href="https://github.com/Adrichu00/WhichBox/" target="_blank" title="Source Code">Source Code</a>

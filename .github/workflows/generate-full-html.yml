@@ -1,0 +1,15 @@
+name: Generate Single HTML File
+run-name: Generate Single HTML File (${{github.sha}})
+on:
+  push:
+    paths:
+      - 'index.html'
+      - 'styles.css'
+      - 'functions.js'
+      - 'scripts/generate-single-file.sh'
+jobs:
+  Generate File:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Script
+      - run: ./scripts/generate-single-file.sh
