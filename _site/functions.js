@@ -1,14 +1,14 @@
 const MASK = 0x0003FFFF;
-const MAX_DMA = 124;
-const DMA_MASK = ~3;
+const MAX_ASLR = 124;
+const ASLR_MASK = ~3;
 
 const SLOT_SIZE = 80;
 const BOX_SIZE = SLOT_SIZE * 30;
 
 const START_DATA = {
-    "Emerald": {start: "0x0202980C", do: true},
-    "FRLG": {start: "0x02029318", do: true},
-    "RS": {start: "0x020300A4", do: false}
+    "Emerald": {start: "0x02029808", has_aslr: true},
+    "FRLG": {start: "0x02029314", has_aslr: true},
+    "RS": {start: "0x020300A0", has_aslr: false}
 };
 
 let current_info_containers_bg = new Map();
@@ -90,7 +90,16 @@ function selectStart(type, selector_prefix) {
         selector_prefix = selector_prefix?? "";
         const data = START_DATA[type];
         document.getElementById(selector_prefix + "start-input").value = data.start;
-        document.getElementById(selector_prefix + "off-row").hidden = !data.do;
+        document.getElementById(selector_prefix + "off-block").hidden = !data.has_aslr;
+        if(data.has_aslr) {
+            let value = parseInt(data.start);
+            if(isNaN(value))
+                return;
+            let o = parseInt(document.getElementById(selector_prefix + "aslr-offset").value);
+            if(!isNaN(o))
+                value += o;
+            document.getElementById(selector_prefix + "gpksptr-input").value = formatToHex(value, 8, "0x");
+        }
     }
 }
 
@@ -111,7 +120,20 @@ function displayMsg(msg, bg, selector_prefix) {
 function changeFullRange(value, selector_prefix) {
     selector_prefix = selector_prefix?? "";
     document.getElementById(selector_prefix + "full-range-check").checked = value;
-    document.getElementById(selector_prefix + "dma-offset").disabled = value;
+    document.getElementById(selector_prefix + "aslr-offset").disabled = value;
+    document.getElementById(selector_prefix + "gpksptr-input").disabled = value;
+    document.getElementById(selector_prefix + "update-aslr-btn").disabled = value;
+}
+
+function updateASLROffset(selector_prefix) {
+    selector_prefix = selector_prefix?? "";
+    let s = parseInt(document.getElementById(selector_prefix + "start-input").value);
+    if(isNaN(s))
+        return;
+    let p = parseInt(document.getElementById(selector_prefix + "gpksptr-input").value);
+    if(isNaN(p))
+        return;
+    document.getElementById(selector_prefix + "aslr-offset").value = ((p - s) & ASLR_MASK) % 128;
 }
 
 
@@ -125,7 +147,7 @@ function whichbox(offset) {
 
 
 function whichaddr(start, box, slot) {
-    return formatToHex(start + (box - 1) * BOX_SIZE + (slot - 1) * SLOT_SIZE, 8, "0x");
+    return formatToHex(start + 4 + (box - 1) * BOX_SIZE + (slot - 1) * SLOT_SIZE, 8, "0x");
 }
 
 
@@ -147,17 +169,17 @@ function submitCalculate(event) {
     s &= MASK;
     let result;
     if(data.get("game") == "RS") {
-        result = whichbox(o - s);
+        result = whichbox(o - s - 4);
     } else {
         if(data.get("full-range")) {
-            result = "From " + whichbox(o - s - MAX_DMA) + " to " + whichbox(o - s);
+            result = "From " + whichbox(o - s - MAX_ASLR - 4) + " to " + whichbox(o - s - 4);
         } else {
-            let d = parseInt(data.get("dma-offset"));
+            let d = parseInt(data.get("aslr-offset"));
             if(isNaN(d)) {
-                displayMsg("Invalid DMA Offset value", error_bg);
+                displayMsg("Invalid ASLR Offset value", error_bg);
                 return;
             }
-            result = whichbox(o - s - d);
+            result = whichbox(o - s - d - 4);
         }
     }
     document.getElementById("msg-container").hidden = true;
@@ -181,7 +203,7 @@ function submitInverseCalculate(event) {
     }
     let o = parseInt(data.get("inverse-slot"));
     if(isNaN(o)) {
-        displayMsg("Invalid dma offset value", error_bg, "inverse-");
+        displayMsg("Invalid aslr offset value", error_bg, "inverse-");
         return;
     }
     let result;
@@ -189,11 +211,11 @@ function submitInverseCalculate(event) {
         result = whichaddr(s, b, o);
     } else {
         if(data.get("inverse-full-range")) {
-            result = whichaddr(s, b, o) + " - " + whichaddr(s + MAX_DMA + 4, b, o);
+            result = whichaddr(s, b, o) + " - " + whichaddr(s + MAX_ASLR + 4, b, o);
         } else {
-            let d = parseInt(data.get("inverse-dma-offset"));
+            let d = parseInt(data.get("inverse-aslr-offset"));
             if(isNaN(d)) {
-                displayMsg("Invalid DMA Offset value", error_bg, "inverse-");
+                displayMsg("Invalid ASLR Offset value", error_bg, "inverse-");
                 return;
             }
             result = whichaddr(s + d, b, o);
