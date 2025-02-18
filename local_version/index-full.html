@@ -55,16 +55,16 @@
             crossorigin="anonymous"></script>
         <script>
             const MASK = 0x0003FFFF;
-            const MAX_DMA = 124;
-            const DMA_MASK = ~3;
+            const MAX_ASLR = 124;
+            const ASLR_MASK = ~3;
             
             const SLOT_SIZE = 80;
             const BOX_SIZE = SLOT_SIZE * 30;
             
             const START_DATA = {
-                "Emerald": {start: "0x0202980C", do: true},
-                "FRLG": {start: "0x02029318", do: true},
-                "RS": {start: "0x020300A4", do: false}
+                "Emerald": {start: "0x02029808", has_aslr: true},
+                "FRLG": {start: "0x02029314", has_aslr: true},
+                "RS": {start: "0x020300A0", has_aslr: false}
             };
             
             let current_info_containers_bg = new Map();
@@ -146,7 +146,16 @@
                     selector_prefix = selector_prefix?? "";
                     const data = START_DATA[type];
                     document.getElementById(selector_prefix + "start-input").value = data.start;
-                    document.getElementById(selector_prefix + "off-row").hidden = !data.do;
+                    document.getElementById(selector_prefix + "off-block").hidden = !data.has_aslr;
+                    if(data.has_aslr) {
+                        let value = parseInt(data.start);
+                        if(isNaN(value))
+                            return;
+                        let o = parseInt(document.getElementById(selector_prefix + "aslr-offset").value);
+                        if(!isNaN(o))
+                            value += o;
+                        document.getElementById(selector_prefix + "gpksptr-input").value = formatToHex(value, 8, "0x");
+                    }
                 }
             }
             
@@ -167,7 +176,20 @@
             function changeFullRange(value, selector_prefix) {
                 selector_prefix = selector_prefix?? "";
                 document.getElementById(selector_prefix + "full-range-check").checked = value;
-                document.getElementById(selector_prefix + "dma-offset").disabled = value;
+                document.getElementById(selector_prefix + "aslr-offset").disabled = value;
+                document.getElementById(selector_prefix + "gpksptr-input").disabled = value;
+                document.getElementById(selector_prefix + "update-aslr-btn").disabled = value;
+            }
+            
+            function updateASLROffset(selector_prefix) {
+                selector_prefix = selector_prefix?? "";
+                let s = parseInt(document.getElementById(selector_prefix + "start-input").value);
+                if(isNaN(s))
+                    return;
+                let p = parseInt(document.getElementById(selector_prefix + "gpksptr-input").value);
+                if(isNaN(p))
+                    return;
+                document.getElementById(selector_prefix + "aslr-offset").value = ((p - s) & ASLR_MASK) % 128;
             }
             
             
@@ -181,7 +203,7 @@
             
             
             function whichaddr(start, box, slot) {
-                return formatToHex(start + (box - 1) * BOX_SIZE + (slot - 1) * SLOT_SIZE, 8, "0x");
+                return formatToHex(start + 4 + (box - 1) * BOX_SIZE + (slot - 1) * SLOT_SIZE, 8, "0x");
             }
             
             
@@ -203,17 +225,17 @@
                 s &= MASK;
                 let result;
                 if(data.get("game") == "RS") {
-                    result = whichbox(o - s);
+                    result = whichbox(o - s - 4);
                 } else {
                     if(data.get("full-range")) {
-                        result = "From " + whichbox(o - s - MAX_DMA) + " to " + whichbox(o - s);
+                        result = "From " + whichbox(o - s - MAX_ASLR - 4) + " to " + whichbox(o - s - 4);
                     } else {
-                        let d = parseInt(data.get("dma-offset"));
+                        let d = parseInt(data.get("aslr-offset"));
                         if(isNaN(d)) {
-                            displayMsg("Invalid DMA Offset value", error_bg);
+                            displayMsg("Invalid ASLR Offset value", error_bg);
                             return;
                         }
-                        result = whichbox(o - s - d);
+                        result = whichbox(o - s - d - 4);
                     }
                 }
                 document.getElementById("msg-container").hidden = true;
@@ -237,7 +259,7 @@
                 }
                 let o = parseInt(data.get("inverse-slot"));
                 if(isNaN(o)) {
-                    displayMsg("Invalid dma offset value", error_bg, "inverse-");
+                    displayMsg("Invalid aslr offset value", error_bg, "inverse-");
                     return;
                 }
                 let result;
@@ -245,11 +267,11 @@
                     result = whichaddr(s, b, o);
                 } else {
                     if(data.get("inverse-full-range")) {
-                        result = whichaddr(s, b, o) + " - " + whichaddr(s + MAX_DMA + 4, b, o);
+                        result = whichaddr(s, b, o) + " - " + whichaddr(s + MAX_ASLR + 4, b, o);
                     } else {
-                        let d = parseInt(data.get("inverse-dma-offset"));
+                        let d = parseInt(data.get("inverse-aslr-offset"));
                         if(isNaN(d)) {
-                            displayMsg("Invalid DMA Offset value", error_bg, "inverse-");
+                            displayMsg("Invalid ASLR Offset value", error_bg, "inverse-");
                             return;
                         }
                         result = whichaddr(s + d, b, o);
@@ -302,18 +324,29 @@
                                 <label for="select-game">Game</label>
                             </div>
                             <div class="col-6 form-floating mt-2">
-                                <input type="text" class="form-control text-end" name="start" id="start-input" placeholder="0x00000000" value="0x0202980C"/>
-                                <label for="start-input">Start</label>
+                                <input type="text" class="form-control text-end" name="start" id="start-input" placeholder="0x00000000" value="0x02029808"/>
+                                <label for="start-input">gPokemonStorage Address</label>
                             </div>
                         </div>
-                        <div id="off-row" class="row align-items-center">
-                            <div class="col-6 form-check form-switch mt-2 text-start">
-                                <input type="checkbox" class="form-check-input" name="full-range" id="full-range-check" role="switch" checked onchange="changeFullRange(event.target.checked)"/>
-                                <label for="full-range-check" class="form-check-label">Full range</label>
+                        <div id="off-block">
+                            <div class="row align-items-center">
+                                <div class="col-6 form-check form-switch mt-2 px-5 text-start">
+                                    <input type="checkbox" class="form-check-input" name="full-range" id="full-range-check" role="switch" checked onchange="changeFullRange(event.target.checked)"/>
+                                    <label for="full-range-check" class="form-check-label">Full range</label>
+                                </div>
+                                <div class="col-6 form-floating mt-2">
+                                    <input type="number" class="form-control text-end" name="aslr-offset" id="aslr-offset" placeholder="000" value="0" min="0" max="124" step="4" disabled/>
+                                    <label for="aslr-offset">ASLR Offset</label>
+                                </div>
                             </div>
-                            <div class="col-6 form-floating mt-2">
-                                <input type="number" class="form-control text-end" name="dma-offset" id="dma-offset" placeholder="000" value="0" min="0" max="124" step="4" disabled/>
-                                <label for="dma-offset">DMA Offset</label>
+                            <div class="row align-items-center">
+                                <div class="col-6 form-floating mt-2">
+                                    <input type="text" class="form-control text-end" name="gpksptr" id="gpksptr-input" placeholder="0x00000000" value="0x02029808" disabled/>
+                                    <label for="gpksptr-input">gPokemonStoragePtr Value</label>
+                                </div>
+                                <div class="col-6 form-check form-switch mt-2">
+                                    <button id="update-aslr-btn" class="btn btn-primary" type="button" onclick="updateASLROffset()" disabled>Update ASLR</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -327,6 +360,16 @@
                 <h2 class="w-100 text-center p-0">WhichAddress</h2>
                     <div class="col-12 col-lg">
                         <div class="row align-items-center">
+                            <div class="col-6 form-floating mt-2">
+                                <input type="number" class="form-control text-end" name="inverse-box" id="inverse-box-input" placeholder="1" value="1" min="1" max="14" step="1"/>
+                                <label for="inverse-box-input">BOX</label>
+                            </div>
+                            <div class="col-6 form-floating mt-2">
+                                <input type="number" class="form-control text-end" name="inverse-slot" id="inverse-slot-input" placeholder="30" value="1" min="1" max="30" step="1"/>
+                                <label for="inverse-box-input">Slot</label>
+                            </div>
+                        </div>
+                        <div class="row align-items-center">
                             <div class="col-6 form-floating text-start">
                                 <select id="inverse-select-name" name="inverse-game" class="form-select" aria-label=".form-select-lg" onchange="selectStart(event.target.value, 'inverse-')">
                                     <option value="Emerald" selected>Emerald</option>
@@ -336,28 +379,29 @@
                                 <label for="inverse-select-game">Game</label>
                             </div>
                             <div class="col-6 form-floating mt-2">
-                                <input type="text" class="form-control text-end" name="inverse-start" id="inverse-start-input" placeholder="0x00000000" value="0x0202980C"/>
-                                <label for="inverse-start-input">Start</label>
+                                <input type="text" class="form-control text-end" name="inverse-start" id="inverse-start-input" placeholder="0x00000000" value="0x02029808"/>
+                                <label for="inverse-start-input">gPokemonStorage Address</label>
                             </div>
                         </div>
-                        <div id="inverse-off-row" class="row align-items-center">
-                            <div class="col-6 form-check form-switch mt-2 text-start">
-                                <input type="checkbox" class="form-check-input" name="inverse-full-range" id="inverse-full-range-check" role="switch" checked onchange="changeFullRange(event.target.checked, 'inverse-')"/>
-                                <label for="inverse-full-range-check" class="form-check-label">Full range</label>
+                        <div id="inverse-off-block">
+                            <div class="row align-items-center">
+                                <div class="col-6 form-check form-switch mt-2 px-5 text-start">
+                                    <input type="checkbox" class="form-check-input" name="inverse-full-range" id="inverse-full-range-check" role="switch" checked onchange="changeFullRange(event.target.checked, 'inverse-')"/>
+                                    <label for="inverse-full-range-check" class="form-check-label">Full range</label>
+                                </div>
+                                <div class="col-6 form-floating mt-2">
+                                    <input type="number" class="form-control text-end" name="inverse-aslr-offset" id="inverse-aslr-offset" placeholder="000" value="0" min="0" max="124" step="4" disabled/>
+                                    <label for="inverse-aslr-offset">ASLR Offset</label>
+                                </div>
                             </div>
-                            <div class="col-6 form-floating mt-2">
-                                <input type="number" class="form-control text-end" name="inverse-dma-offset" id="inverse-dma-offset" placeholder="000" value="0" min="0" max="124" step="4" disabled/>
-                                <label for="inverse-dma-offset">DMA Offset</label>
-                            </div>
-                        </div>
-                        <div class="row align-items-center">
-                            <div class="col-6 form-floating mt-2">
-                                <input type="number" class="form-control text-end" name="inverse-box" id="inverse-box-input" placeholder="1" value="1" min="1" max="14" step="1"/>
-                                <label for="inverse-box-input">BOX</label>
-                            </div>
-                            <div class="col-6 form-floating mt-2">
-                                <input type="number" class="form-control text-end" name="inverse-slot" id="inverse-slot-input" placeholder="30" value="1" min="1" max="30" step="1"/>
-                                <label for="inverse-box-input">Slot</label>
+                            <div class="row align-items-center">
+                                <div class="col-6 form-floating mt-2">
+                                    <input type="text" class="form-control text-end" name="inverse-gpksptr" id="inverse-gpksptr-input" placeholder="0x00000000" value="0x02029808" disabled/>
+                                    <label for="inverse-gpksptr-input">gPokemonStoragePtr Value</label>
+                                </div>
+                                <div class="col-6 form-check form-switch mt-2 px-5">
+                                    <button id="inverse-update-aslr-btn" class="btn btn-primary" type="button" onclick="updateASLROffset('inverse-')" disabled>Update ASLR</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -369,9 +413,8 @@
             </div>
         </div>
         <footer class="w-100 mt-3 mt-lg-0 d-flex border-top border-secondary flex-row align-items-center justify-content-evenly pt-2 pb-3">
-            <div>
-                <p class="m-0">Developed by Adrichu00</p>
-                <a href="https://github.com/Adrichu00/WhichBox/" target="_blank" title="Source Code">Source Code</a>
+            <p class="m-0">Developed by Adrichu00</p>
+            <a href="https://github.com/Adrichu00/WhichBox/" rel="noopener" target="_blank" title="Source Code">Source Code</a>
         </footer>
     </body>
 </html>
