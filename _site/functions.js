@@ -211,7 +211,7 @@ function submitInverseCalculate(event) {
         result = whichaddr(s, b, o);
     } else {
         if(data.get("inverse-full-range")) {
-            result = whichaddr(s, b, o) + " - " + whichaddr(s + MAX_ASLR + 4, b, o);
+            result = whichaddr(s, b, o) + " - " + whichaddr(s + MAX_ASLR, b, o);
         } else {
             let d = parseInt(data.get("inverse-aslr-offset"));
             if(isNaN(d)) {
