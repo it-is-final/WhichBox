@@ -11,26 +11,6 @@ on:
       - 'scripts/generate_local_version.sh'
       - '.github/workflows/deploy.yml'
 jobs:
-  generate_local_version:
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Generate Single File
-        run: ./scripts/generate_local_version.sh
-      - name: Update Repository
-        id: generate_single_file
-        run: |
-          git config --global user.name 'Automated WhichBox SingleFile'
-          git config --global user.email 'automated-whichbox-singlefile@users.noreply.github.com'
-          git remote set-url origin https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/$GITHUB_REPOSITORY
-          git add -f local_version/index-full.html
-          git commit -m "Generate local version (${{github.sha}})"
-          git fetch origin main
-          git push origin HEAD:main
-        continue-on-error: true
   deploy:
     permissions:
       contents: write
@@ -43,6 +23,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Generate Single File
+        id: generate_single_file
+        run: ./scripts/generate_local_version.sh
       - name: Upload Artifact
         id: upload_pages
         uses: actions/upload-pages-artifact@v3

@@ -16,5 +16,6 @@ functions_cmd="s/$script_regex/$functions/g"
 
 mkdir -p local_version
 sed -e "$styles_cmd" _site/index.html > index-temp.html
-sed -e "$functions_cmd" index-temp.html | tr "\t" "\n" > local_version/index-full.html
-rm index-temp.html
+sed -e "$functions_cmd" index-temp.html | tr "\t" "\n" > index.html
+zip _site/whichbox_local_version.zip index.html
+rm index-temp.html index.html
