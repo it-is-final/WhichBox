@@ -1,9 +1,11 @@
-const MASK = 0x0003FFFF;
+const ADDRESS_MASK = 0xFF03FFFF;
 const MAX_ASLR = 124;
 const ASLR_MASK = ~3;
 
 const SLOT_SIZE = 80;
 const BOX_SIZE = SLOT_SIZE * 30;
+
+const MAX_DIFF = 4 + (BOX_SIZE + 10) * 14 + MAX_ASLR;
 
 const START_DATA = {
     "Emerald": {start: "0x02029808", has_aslr: true},
@@ -12,6 +14,14 @@ const START_DATA = {
 };
 
 let current_info_containers_bg = new Map();
+
+
+class FormValidationError extends Error {
+	constructor(message) {
+		super(message);
+		this.name = "FormValidationError";
+	}
+}
 
 
 function validTheme(theme) {
@@ -79,15 +89,15 @@ loadDefaultTheme();
 
 
 function formatToHex(num, digits, prefix) {
-    prefix = prefix?? "";
-    digits = digits?? 0;
+    prefix ??= "";
+    digits ??= 0;
     return prefix + num.toString(16).toUpperCase().padStart(digits, "0");
 }
 
 
 function selectStart(type, selector_prefix) {
     if(type in START_DATA) {
-        selector_prefix = selector_prefix?? "";
+        selector_prefix ??= "";
         const data = START_DATA[type];
         document.getElementById(selector_prefix + "start-input").value = data.start;
         document.getElementById(selector_prefix + "off-block").hidden = !data.has_aslr;
@@ -105,7 +115,7 @@ function selectStart(type, selector_prefix) {
 
 
 function displayMsg(msg, bg, selector_prefix) {
-    selector_prefix = selector_prefix?? "";
+    selector_prefix ??= "";
     document.getElementById(selector_prefix + "msg-text").innerHTML = msg;
     bg = "bg-" + (bg?? "secondary");
     let element = document.getElementById(selector_prefix + "msg-container");
@@ -117,16 +127,28 @@ function displayMsg(msg, bg, selector_prefix) {
 }
 
 
+function clearMsg(selector_prefix) {
+	selector_prefix ??= "";
+	let element = document.getElementById(selector_prefix + "msg-container");
+	if(current_info_containers_bg.has(selector_prefix)) {
+		element.classList.remove(current_info_containers_bg.get(selector_prefix));
+		current_info_containers_bg.delete(selector_prefix);
+	}
+	element.hidden = true;
+}
+
+
 function changeFullRange(value, selector_prefix) {
-    selector_prefix = selector_prefix?? "";
+    selector_prefix ??= "";
     document.getElementById(selector_prefix + "full-range-check").checked = value;
     document.getElementById(selector_prefix + "aslr-offset").disabled = value;
     document.getElementById(selector_prefix + "gpksptr-input").disabled = value;
     document.getElementById(selector_prefix + "update-aslr-btn").disabled = value;
 }
 
+
 function updateASLROffset(selector_prefix) {
-    selector_prefix = selector_prefix?? "";
+    selector_prefix ??= "";
     let s = parseInt(document.getElementById(selector_prefix + "start-input").value);
     if(isNaN(s))
         return;
@@ -138,6 +160,10 @@ function updateASLROffset(selector_prefix) {
 
 
 function whichbox(offset) {
+	if(offset < -4)
+		return "";
+	if(offset < 0)
+		return "Box 1 - Slot 1 (-" + formatToHex(-offset, 2, "0x") + ")";
     box = Math.floor(offset / 2400) + 1;
     offset %= 2400;
     slot = Math.floor(offset / 80) + 1;
@@ -151,38 +177,120 @@ function whichaddr(start, box, slot) {
 }
 
 
+function validateFormDiff(diff) {
+	if(diff < 0 || diff >= MAX_DIFF)
+		throw new FormValidationError("Outside the PokemonStorage structure");
+}
+
+
+function parseFormData(data) {
+	let result = { game: data.get("game") };
+	if(isNaN(result.start = parseInt(data.get("start"))))
+		throw new FormValidationError("Invalid start value");
+	if(isNaN(result.offset = parseInt(data.get("offset"))))
+		throw new FormValidationError("Invalid address value");
+	result.start &= ADDRESS_MASK;
+	result.offset &= ADDRESS_MASK;
+	result.diff = result.offset - result.start;
+	if(result.game != "RS") {
+		result.full_range = !!data.get("full-range")
+		if(result.full_range) {
+			validateFormDiff(result.diff_end = result.diff);
+			validateFormDiff(result.diff -= MAX_ASLR);
+		} else {
+			if(isNaN(result.aslr_offset = parseInt(data.get("aslr-offset"))))
+				throw new FormValidationError("Invalid ASLR offset value");
+			validateFormDiff(result.diff -= result.aslr_offset);
+		}
+	} else {
+		validateFormDiff(result.diff);
+	}
+	return result;
+}
+
+
+function parseInverseFormData(data) {
+	let result = { game: data.get("inverse-game") };
+	if(isNaN(result.start = parseInt(data.get("inverse-start"))))
+		throw new FormValidationError("Invalid start value");
+	if(isNaN(result.box = parseInt(data.get("inverse-box"))))
+		throw new FormValidationError("Invalid box value");
+	if(isNaN(result.slot = parseInt(data.get("inverse-slot"))))
+		throw new FormValidationError("Invalid slot value");
+	if(
+		result.game != "RS" &&
+		!(result.full_range = !!data.get("inverse-full-range")) &&
+		isNaN(result.aslr_offset = parseInt(data.get("inverse-aslr-offset")))
+	)
+		throw new FormValidationError("Invalid ASLR offset value");
+	return result;
+}
+
+
+function clearShareData(selector_prefix) {
+	selector_prefix ??= "";
+	document.getElementById(selector_prefix + "share-block").hidden = true;
+	document.getElementById(selector_prefix + "share-url").value = "";
+}
+
+
+function setShareData(data) {
+	let url = new URL(document.location.pathname, document.location.origin);
+	let game = data.get("game");
+	url.searchParams.set("mode", "whichbox");
+	url.searchParams.set("game", game);
+	url.searchParams.set("start", data.get("start"));
+	url.searchParams.set("address", data.get("offset"));
+	if(START_DATA[game].has_aslr) {
+		let full_range;
+		url.searchParams.set("full-range", full_range = !!data.get("full-range"));
+		if(!full_range)
+			url.searchParams.set("aslr-offset", data.get("aslr-offset"));
+	}
+	document.getElementById("share-url").value = url.toString();
+	document.getElementById("share-block").hidden = false;
+}
+
+
+function setInverseShareData(data) {
+	let url = new URL(document.location.pathname, document.location.origin);
+	let game = data.get("inverse-game");
+	url.searchParams.set("mode", "address");
+	url.searchParams.set("game", game);
+	url.searchParams.set("start", data.get("inverse-start"));
+	url.searchParams.set("box", data.get("inverse-box"));
+	url.searchParams.set("slot", data.get("inverse-slot"));
+	if(START_DATA[game].has_aslr) {
+		let full_range;
+		url.searchParams.set("full-range", full_range = !!data.get("inverse-full-range"));
+		if(!full_range)
+			url.searchParams.set("aslr-offset", data.get("inverse-aslr-offset"));
+	}
+	document.getElementById("inverse-share-url").value = url.toString();
+	console.log(url.toString());
+	document.getElementById("inverse-share-block").hidden = false;
+}
+
+
 function submitCalculate(event) {
     event.preventDefault();
     const error_bg = getStoredTheme() == "dark"? "danger": "danger-subtle";
-    let data = new FormData(event.target);
-    let s = parseInt(data.get("start"));
-    if(isNaN(s)) {
-        displayMsg("Invalid start value", error_bg);
-        return;
-    }
-    let o = parseInt(data.get("offset"));
-    if(isNaN(o)) {
-        displayMsg("Invalid address value", error_bg);
-        return;
-    }
-    o &= MASK;
-    s &= MASK;
-    let result;
-    if(data.get("game") == "RS") {
-        result = whichbox(o - s - 4);
-    } else {
-        if(data.get("full-range")) {
-            result = "From " + whichbox(o - s - MAX_ASLR - 4) + " to " + whichbox(o - s - 4);
-        } else {
-            let d = parseInt(data.get("aslr-offset"));
-            if(isNaN(d)) {
-                displayMsg("Invalid ASLR Offset value", error_bg);
-                return;
-            }
-            result = whichbox(o - s - d - 4);
-        }
-    }
-    document.getElementById("msg-container").hidden = true;
+	let data = new FormData(event.target);
+	let parsed_data;
+	try {
+		parsed_data = parseFormData(data);
+	} catch(error) {
+		if(error.name != "FormValidationError")
+			throw error;
+		displayMsg(error.message, error_bg);
+		clearShareData();
+		return;
+	}
+	let result = whichbox(parsed_data.diff - 4);
+	if(parsed_data.game != "RS" && parsed_data.full_range)
+		result = "From " + result + " to " + whichbox(parsed_data.diff_end - 4);
+	clearMsg();
+	setShareData(data);
     document.getElementById("result-container").innerHTML = result;
 }
 
@@ -191,44 +299,122 @@ function submitInverseCalculate(event) {
     event.preventDefault();
     const error_bg = getStoredTheme() == "dark"? "danger": "danger-subtle";
     let data = new FormData(event.target);
-    let s = parseInt(data.get("inverse-start"));
-    if(isNaN(s)) {
-        displayMsg("Invalid start value", error_bg, "inverse-");
-        return;
-    }
-    let b = parseInt(data.get("inverse-box"));
-    if(isNaN(b)) {
-        displayMsg("Invalid start value", error_bg, "inverse-");
-        return;
-    }
-    let o = parseInt(data.get("inverse-slot"));
-    if(isNaN(o)) {
-        displayMsg("Invalid aslr offset value", error_bg, "inverse-");
-        return;
-    }
+	let parsed_data;
+	try {
+		parsed_data = parseInverseFormData(data);
+	} catch(error) {
+		if(error.name != "FormValidationError")
+			throw error;
+		displayMsg(error.message, error_bg, "inverse-");
+		clearShareData("inverse-");
+		return;
+	}
     let result;
-    if(data.get("inverse-game") == "RS") {
-        result = whichaddr(s, b, o);
+    if(parsed_data.game == "RS") {
+        result = whichaddr(parsed_data.start, parsed_data.box, parsed_data.slot);
     } else {
-        if(data.get("inverse-full-range")) {
-            result = whichaddr(s, b, o) + " - " + whichaddr(s + MAX_ASLR, b, o);
+        if(parsed_data.full_range) {
+            result = (
+				whichaddr(parsed_data.start, parsed_data.box, parsed_data.slot) +
+				" - " +
+				whichaddr(parsed_data.start + MAX_ASLR, parsed_data.box, parsed_data.slot)
+			);
         } else {
-            let d = parseInt(data.get("inverse-aslr-offset"));
-            if(isNaN(d)) {
-                displayMsg("Invalid ASLR Offset value", error_bg, "inverse-");
-                return;
-            }
-            result = whichaddr(s + d, b, o);
+            result = whichaddr(parsed_data.start + parsed_data.aslr_offset, parsed_data.box, parsed_data.slot);
         }
     }
-    document.getElementById("inverse-msg-container").hidden = true;
+	clearMsg("inverse-");
+	setInverseShareData(data);
     document.getElementById("inverse-result-container").innerHTML = result;
 }
 
+
+function parseWhichBoxURLParams(params) {
+	let data;
+	let game = params.get("game")?? "Emerald";
+	document.getElementById("select-game").value = game;
+	if(params.has("start") && !isNaN(data = parseInt(params.get("start")))) {
+		document.getElementById("start-input").value = formatToHex(data, 8, "0x");
+	} else if(params.has("gPokemonStorage") && !isNaN(data = parseInt(params.get("gPokemonStorage")))) {
+		document.getElementById("start-input").value = formatToHex(data, 8, "0x");
+	}
+	if(params.has("address") && !isNaN(data = parseInt(params.get("address"))))
+		document.getElementById("address-input").value = formatToHex(data, 8, "0x");
+	if(!START_DATA[game].has_aslr) {
+		document.forms["generator"].requestSubmit();
+		return;
+	}
+	if(!params.has("full-range") || params.get("full-range") != "false") {
+		changeFullRange(true);
+	} else {
+		changeFullRange(false);
+		if(params.has("aslr-offset") && !isNaN(data = parseInt(params.get("aslr-offset")))) {
+			document.getElementById("aslr-offset").value = data;
+		} else if(params.has("gPokemonStoragePtr") && !isNaN(data = parseInt(params.get("gPokemonStoragePtr")))) {
+			document.getElementById("gpksptr-input").value = data;
+			updateASLROffset();
+		}
+	}
+	document.forms["generator"].requestSubmit();
+}
+
+
+function parseWhichAddressURLParams(params) {
+	let data;
+	let game = params.get("game")?? "Emerald";
+	document.getElementById("inverse-select-game").value = game;
+	if(params.has("start") && !isNaN(data = parseInt(params.get("start")))) {
+		document.getElementById("inverse-start-input").value = formatToHex(data, 8, "0x");
+	} else if(params.has("gPokemonStorage") && !isNaN(data = parseInt(params.get("gPokemonStorage")))) {
+		document.getElementById("inverse-start-input").value = formatToHex(data, 8, "0x");
+	}
+	if(params.has("box") && !isNaN(data = parseInt(params.get("box"))))
+		document.getElementById("inverse-box-input").value = data;
+	if(params.has("slot") && !isNaN(data = parseInt(params.get("slot"))))
+		document.getElementById("inverse-slot-input").value = data;
+	if(!START_DATA[game].has_aslr) {
+		document.forms["inverse-generator"].requestSubmit();
+		return;
+	}
+	if(!params.has("full-range") || params.get("full-range") != "false") {
+		changeFullRange(true, "inverse-");
+	} else {
+		changeFullRange(false, "inverse-");
+		if(params.has("aslr-offset") && !isNaN(data = parseInt(params.get("aslr-offset")))) {
+			document.getElementById("inverse-aslr-offset").value = data;
+		} else if(params.has("gPokemonStoragePtr") && !isNaN(data = parseInt(params.get("gPokemonStoragePtr")))) {
+			document.getElementById("inverse-gpksptr-input").value = data;
+			updateASLROffset("inverse-");
+		}
+	}
+	document.forms["inverse-generator"].requestSubmit();
+}
+
+
+function parseURLParams() {
+	let params = new URLSearchParams(document.location.search);
+	if(params.size == 0)
+		return;
+	if(params.has("game") && !(params.get("game") in START_DATA))
+		return;
+	if(params.has("mode") && params.get("mode") == "address")
+		parseWhichAddressURLParams(params);
+	else
+		parseWhichBoxURLParams(params);
+}
+
+function copyShareUrl(selector_prefix) {
+	selector_prefix ??= "";
+	navigator.clipboard.writeText(document.getElementById(selector_prefix + "share-url").value);
+	let element = document.getElementById(selector_prefix + "share-msg");
+	element.classList.toggle("show-msg");
+	setTimeout((element) => element.classList.toggle("show-msg"), 5000, element);
+}
 
 
 document.addEventListener("DOMContentLoaded", () => {
     loadDefaultTheme();
     document.getElementById("msg-container").hidden = true;
     document.getElementById("inverse-msg-container").hidden = true;
+	parseURLParams();
 });

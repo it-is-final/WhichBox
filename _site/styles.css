@@ -38,3 +38,23 @@ input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button {
     -webkit-appearance: none;
 }
+
+.share-msg {
+	visibility: hidden;
+}
+
+.share-msg.show-msg {
+	animation: fadeinout 5s linear forwards;
+}
+
+@-webkit-keyframes fadeinout {
+  0% { visibility: visible; opacity: 0}
+  50% { visibility: visible; opacity: 1}
+  100% { visibility: hidden; opacity: 0}
+}
+
+@keyframes fadeinout {
+  0% { visibility: visible; opacity: 0}
+  50% { visibility: visible; opacity: 1}
+  100% { visibility: hidden; opacity: 0}
+}
