@@ -183,11 +183,18 @@ function validateFormDiff(diff) {
 }
 
 
-function parseFormData(data) {
+function parseTextNumber(num) {
+	if(num.match(/^[+\-]?(\d+|0x[\da-f]+|0o[0-8]+|0b[01]+)$/i) == null)
+		return NaN;
+	return parseInt(num);
+}
+
+
+function parseWhichBoxFormData(data) {
 	let result = { game: data.get("game") };
-	if(isNaN(result.start = parseInt(data.get("start"))))
+	if(isNaN(result.start = parseTextNumber(data.get("start"))))
 		throw new FormValidationError("Invalid start value");
-	if(isNaN(result.offset = parseInt(data.get("offset"))))
+	if(isNaN(result.offset = parseTextNumber(data.get("offset"))))
 		throw new FormValidationError("Invalid address value");
 	result.start &= ADDRESS_MASK;
 	result.offset &= ADDRESS_MASK;
@@ -209,9 +216,9 @@ function parseFormData(data) {
 }
 
 
-function parseInverseFormData(data) {
+function parseWhichAddressFormData(data) {
 	let result = { game: data.get("inverse-game") };
-	if(isNaN(result.start = parseInt(data.get("inverse-start"))))
+	if(isNaN(result.start = parseTextNumber(data.get("inverse-start"))))
 		throw new FormValidationError("Invalid start value");
 	if(isNaN(result.box = parseInt(data.get("inverse-box"))))
 		throw new FormValidationError("Invalid box value");
@@ -234,7 +241,7 @@ function clearShareData(selector_prefix) {
 }
 
 
-function setShareData(data) {
+function setWhichBoxShareData(data) {
 	let url = new URL(document.location.pathname, document.location.origin);
 	let game = data.get("game");
 	url.searchParams.set("mode", "whichbox");
@@ -252,7 +259,7 @@ function setShareData(data) {
 }
 
 
-function setInverseShareData(data) {
+function setWhichAddressShareData(data) {
 	let url = new URL(document.location.pathname, document.location.origin);
 	let game = data.get("inverse-game");
 	url.searchParams.set("mode", "address");
@@ -267,18 +274,17 @@ function setInverseShareData(data) {
 			url.searchParams.set("aslr-offset", data.get("inverse-aslr-offset"));
 	}
 	document.getElementById("inverse-share-url").value = url.toString();
-	console.log(url.toString());
 	document.getElementById("inverse-share-block").hidden = false;
 }
 
 
-function submitCalculate(event) {
+function submitWhichBox(event) {
     event.preventDefault();
     const error_bg = getStoredTheme() == "dark"? "danger": "danger-subtle";
 	let data = new FormData(event.target);
 	let parsed_data;
 	try {
-		parsed_data = parseFormData(data);
+		parsed_data = parseWhichBoxFormData(data);
 	} catch(error) {
 		if(error.name != "FormValidationError")
 			throw error;
@@ -290,18 +296,18 @@ function submitCalculate(event) {
 	if(parsed_data.game != "RS" && parsed_data.full_range)
 		result = "From " + result + " to " + whichbox(parsed_data.diff_end - 4);
 	clearMsg();
-	setShareData(data);
+	setWhichBoxShareData(data);
     document.getElementById("result-container").innerHTML = result;
 }
 
 
-function submitInverseCalculate(event) {
+function submitWhichAddress(event) {
     event.preventDefault();
     const error_bg = getStoredTheme() == "dark"? "danger": "danger-subtle";
     let data = new FormData(event.target);
 	let parsed_data;
 	try {
-		parsed_data = parseInverseFormData(data);
+		parsed_data = parseWhichAddressFormData(data);
 	} catch(error) {
 		if(error.name != "FormValidationError")
 			throw error;
@@ -324,7 +330,7 @@ function submitInverseCalculate(event) {
         }
     }
 	clearMsg("inverse-");
-	setInverseShareData(data);
+	setWhichAddressShareData(data);
     document.getElementById("inverse-result-container").innerHTML = result;
 }
 
@@ -333,12 +339,12 @@ function parseWhichBoxURLParams(params) {
 	let data;
 	let game = params.get("game")?? "Emerald";
 	document.getElementById("select-game").value = game;
-	if(params.has("start") && !isNaN(data = parseInt(params.get("start")))) {
+	if(params.has("start") && !isNaN(data = parseTextNumber(params.get("start")))) {
 		document.getElementById("start-input").value = formatToHex(data, 8, "0x");
-	} else if(params.has("gPokemonStorage") && !isNaN(data = parseInt(params.get("gPokemonStorage")))) {
+	} else if(params.has("gPokemonStorage") && !isNaN(data = parseTextNumber(params.get("gPokemonStorage")))) {
 		document.getElementById("start-input").value = formatToHex(data, 8, "0x");
 	}
-	if(params.has("address") && !isNaN(data = parseInt(params.get("address"))))
+	if(params.has("address") && !isNaN(data = parseTextNumber(params.get("address"))))
 		document.getElementById("address-input").value = formatToHex(data, 8, "0x");
 	if(!START_DATA[game].has_aslr) {
 		document.forms["generator"].requestSubmit();
@@ -363,9 +369,9 @@ function parseWhichAddressURLParams(params) {
 	let data;
 	let game = params.get("game")?? "Emerald";
 	document.getElementById("inverse-select-game").value = game;
-	if(params.has("start") && !isNaN(data = parseInt(params.get("start")))) {
+	if(params.has("start") && !isNaN(data = parseTextNumber(params.get("start")))) {
 		document.getElementById("inverse-start-input").value = formatToHex(data, 8, "0x");
-	} else if(params.has("gPokemonStorage") && !isNaN(data = parseInt(params.get("gPokemonStorage")))) {
+	} else if(params.has("gPokemonStorage") && !isNaN(data = parseTextNumber(params.get("gPokemonStorage")))) {
 		document.getElementById("inverse-start-input").value = formatToHex(data, 8, "0x");
 	}
 	if(params.has("box") && !isNaN(data = parseInt(params.get("box"))))
