@@ -29,126 +29,126 @@
         </div>
         <div id="content-container" class="d-flex flex-column align-items-center justify-content-evenly">
             <form id="generator" class="generator container-xl row m-auto align-items-center justify-content-evenly mt-5" onsubmit="submitWhichBox(event)">
-				<div class="col-12 col-lg">
-					<div class="row">
-						<div class="col-6 form-floating mt-2 ms-auto">
-							<input type="text" class="form-control text-end" name="offset" id="address-input" placeholder="0x00000000" value="0x020300A4"/>
-							<label for="address-input">Address</label>
-						</div>
-					</div>
-					<div class="row align-items-center">
-						<div class="col-6 text-start form-floating">
-							<select id="select-game" name="game" class="form-select" aria-label=".form-select-lg" onchange="selectStart(event.target.value)">
-								<option value="Emerald" selected>Emerald</option>
-								<option value="FRLG">FRLG</option>
-								<option value="RS">RS</option>
-							</select>
-							<label for="select-game">Game</label>
-						</div>
-						<div class="col-6 form-floating mt-2">
-							<input type="text" class="form-control text-end" name="start" id="start-input" placeholder="0x00000000" value="0x02029808"/>
-							<label for="start-input">gPokemonStorage Address</label>
-						</div>
-					</div>
-					<div id="off-block">
-						<div class="row align-items-center">
-							<div class="col-6 form-check form-switch mt-2 px-5 text-start">
-								<input type="checkbox" class="form-check-input" name="full-range" id="full-range-check" role="switch" checked onchange="changeFullRange(event.target.checked)"/>
-								<label for="full-range-check" class="form-check-label">Full range</label>
-							</div>
-							<div class="col-6 form-floating mt-2">
-								<input type="number" class="form-control text-end" name="aslr-offset" id="aslr-offset" placeholder="000" value="0" min="0" max="124" step="4" disabled/>
-								<label for="aslr-offset">ASLR Offset</label>
-							</div>
-						</div>
-						<div class="row align-items-center">
-							<div class="col-6 form-floating mt-2">
-								<input type="text" class="form-control text-end" name="gpksptr" id="gpksptr-input" placeholder="0x00000000" value="0x02029808" disabled/>
-								<label for="gpksptr-input">gPokemonStoragePtr Value</label>
-							</div>
-							<div class="col-6 form-check form-switch mt-2">
-								<button id="update-aslr-btn" class="btn btn-primary" type="button" onclick="updateASLROffset()" disabled>Update ASLR</button>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="col-12 col-lg my-5"><button class="btn btn-primary" type="submit">Calculate</button></div>
-				<div class="col-12 col-lg h-100 text-center">
-					<div id="result-container" class="border border-1 border-secondary rounded-4 px-0 py-2 fs-4"></div>
-					<div id="share-block" hidden>
-						<div class="input-group mt-3">
-							<label class="input-group-text" for="share-url">URL</label>
-							<input type="text" id="share-url" class="form-control" value="" readonly/>
-							<button type="button" id="share-button" class="input-group-append btn btn-primary" onclick="copyShareUrl()">Copy</button>
-						</div>
-						<div id="share-msg" class="share-msg bg-success text-center border rounded mt-1">Copied to Clipboard</div>
-					</div>
-				</div>
+                <div class="col-12 col-lg">
+                    <div class="row">
+                        <div class="col-6 form-floating mt-2 ms-auto">
+                            <input type="text" class="form-control text-end" name="offset" id="address-input" placeholder="0x00000000" value="0x020300A4"/>
+                            <label for="address-input">Address</label>
+                        </div>
+                    </div>
+                    <div class="row align-items-center">
+                        <div class="col-6 text-start form-floating">
+                            <select id="select-game" name="game" class="form-select" aria-label=".form-select-lg" onchange="selectStart(event.target.value)">
+                                <option value="Emerald" selected>Emerald</option>
+                                <option value="FRLG">FRLG</option>
+                                <option value="RS">RS</option>
+                            </select>
+                            <label for="select-game">Game</label>
+                        </div>
+                        <div class="col-6 form-floating mt-2">
+                            <input type="text" class="form-control text-end" name="start" id="start-input" placeholder="0x00000000" value="0x02029808"/>
+                            <label for="start-input">gPokemonStorage Address</label>
+                        </div>
+                    </div>
+                    <div id="off-block">
+                        <div class="row align-items-center">
+                            <div class="col-6 form-check form-switch mt-2 px-5 text-start">
+                                <input type="checkbox" class="form-check-input" name="full-range" id="full-range-check" role="switch" checked onchange="changeFullRange(event.target.checked)"/>
+                                <label for="full-range-check" class="form-check-label">Full range</label>
+                            </div>
+                            <div class="col-6 form-floating mt-2">
+                                <input type="number" class="form-control text-end" name="aslr-offset" id="aslr-offset" placeholder="000" value="0" min="0" max="124" step="4" disabled/>
+                                <label for="aslr-offset">ASLR Offset</label>
+                            </div>
+                        </div>
+                        <div class="row align-items-center">
+                            <div class="col-6 form-floating mt-2">
+                                <input type="text" class="form-control text-end" name="gpksptr" id="gpksptr-input" placeholder="0x00000000" value="0x02029808" disabled/>
+                                <label for="gpksptr-input">gPokemonStoragePtr Value</label>
+                            </div>
+                            <div class="col-6 form-check form-switch mt-2">
+                                <button id="update-aslr-btn" class="btn btn-primary" type="button" onclick="updateASLROffset()" disabled>Update ASLR</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-lg my-5"><button class="btn btn-primary" type="submit">Calculate</button></div>
+                <div class="col-12 col-lg h-100 text-center">
+                    <div id="result-container" class="border border-1 border-secondary rounded-4 px-0 py-2 fs-4"></div>
+                    <div id="share-block" hidden>
+                        <div class="input-group mt-3">
+                            <label class="input-group-text" for="share-url">URL</label>
+                            <input type="text" id="share-url" class="form-control" value="" readonly/>
+                            <button type="button" id="share-button" class="input-group-append btn btn-primary" onclick="copyShareUrl()">Copy</button>
+                        </div>
+                        <div id="share-msg" class="share-msg bg-success text-center border rounded mt-1">Copied to Clipboard</div>
+                    </div>
+                </div>
             </form>
             <div id="msg-container" class="container text-center border border-1 border-secondary rounded-4 mt-4 fs-4 align-items-center">
                 <div id="msg-text" class="py-2"></div>
             </div>
             <form id="inverse-generator" class="generator container-xl row m-auto mt-5  align-items-center justify-content-evenly border-top border-1 border-secondary pt-3 pb-4" onsubmit="submitWhichAddress(event)">
                 <h2 class="w-100 text-center p-0">WhichAddress</h2>
-				<div class="col-12 col-lg">
-					<div class="row align-items-center">
-						<div class="col-6 form-floating mt-2">
-							<input type="number" class="form-control text-end" name="inverse-box" id="inverse-box-input" placeholder="1" value="1" min="1" max="15" step="1"/>
-							<label for="inverse-box-input">BOX</label>
-						</div>
-						<div class="col-6 form-floating mt-2">
-							<input type="number" class="form-control text-end" name="inverse-slot" id="inverse-slot-input" placeholder="30" value="1" min="1" max="30" step="1"/>
-							<label for="inverse-slot-input">Slot</label>
-						</div>
-					</div>
-					<div class="row align-items-center">
-						<div class="col-6 form-floating text-start">
-							<select id="inverse-select-game" name="inverse-game" class="form-select" aria-label=".form-select-lg" onchange="selectStart(event.target.value, 'inverse-')">
-								<option value="Emerald" selected>Emerald</option>
-								<option value="FRLG">FRLG</option>
-								<option value="RS">RS</option>
-							</select>
-							<label for="inverse-select-game">Game</label>
-						</div>
-						<div class="col-6 form-floating mt-2">
-							<input type="text" class="form-control text-end" name="inverse-start" id="inverse-start-input" placeholder="0x00000000" value="0x02029808"/>
-							<label for="inverse-start-input">gPokemonStorage Address</label>
-						</div>
-					</div>
-					<div id="inverse-off-block">
-						<div class="row align-items-center">
-							<div class="col-6 form-check form-switch mt-2 px-5 text-start">
-								<input type="checkbox" class="form-check-input" name="inverse-full-range" id="inverse-full-range-check" role="switch" checked onchange="changeFullRange(event.target.checked, 'inverse-')"/>
-								<label for="inverse-full-range-check" class="form-check-label">Full range</label>
-							</div>
-							<div class="col-6 form-floating mt-2">
-								<input type="number" class="form-control text-end" name="inverse-aslr-offset" id="inverse-aslr-offset" placeholder="000" value="0" min="0" max="124" step="4" disabled/>
-								<label for="inverse-aslr-offset">ASLR Offset</label>
-							</div>
-						</div>
-						<div class="row align-items-center">
-							<div class="col-6 form-floating mt-2">
-								<input type="text" class="form-control text-end" name="inverse-gpksptr" id="inverse-gpksptr-input" placeholder="0x00000000" value="0x02029808" disabled/>
-								<label for="inverse-gpksptr-input">gPokemonStoragePtr Value</label>
-							</div>
-							<div class="col-6 form-check form-switch mt-2">
-								<button id="inverse-update-aslr-btn" class="btn btn-primary" type="button" onclick="updateASLROffset('inverse-')" disabled>Update ASLR</button>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="col-12 col-lg my-5"><button class="btn btn-primary" type="submit">Calculate</button></div>
-				<div class="col-12 col-lg h-100 text-cente">
-					<div id="inverse-result-container" class="border border-1 border-secondary rounded-4 px-0 py-2 fs-4"></div>
-					<div id="inverse-share-block" hidden>
-						<div class="input-group mt-3">
-							<label class="input-group-text" for="inverse-share-url">URL</label>
-							<input type="text" class="form-control" id="inverse-share-url" value="" readonly/>
-							<button type="button" class="input-group-append btn btn-primary" id="inverse-share-button" onclick="copyShareUrl('inverse-')">Copy</button>
-						</div>
-						<div id="inverse-share-msg" class="share-msg bg-success text-center border rounded mt-1">Copied to Clipboard</div>
-					</div>
-				</div>
+                <div class="col-12 col-lg">
+                    <div class="row align-items-center">
+                        <div class="col-6 form-floating mt-2">
+                            <input type="number" class="form-control text-end" name="inverse-box" id="inverse-box-input" placeholder="1" value="1" min="1" max="15" step="1"/>
+                            <label for="inverse-box-input">BOX</label>
+                        </div>
+                        <div class="col-6 form-floating mt-2">
+                            <input type="number" class="form-control text-end" name="inverse-slot" id="inverse-slot-input" placeholder="30" value="1" min="1" max="30" step="1"/>
+                            <label for="inverse-slot-input">Slot</label>
+                        </div>
+                    </div>
+                    <div class="row align-items-center">
+                        <div class="col-6 form-floating text-start">
+                            <select id="inverse-select-game" name="inverse-game" class="form-select" aria-label=".form-select-lg" onchange="selectStart(event.target.value, 'inverse-')">
+                                <option value="Emerald" selected>Emerald</option>
+                                <option value="FRLG">FRLG</option>
+                                <option value="RS">RS</option>
+                            </select>
+                            <label for="inverse-select-game">Game</label>
+                        </div>
+                        <div class="col-6 form-floating mt-2">
+                            <input type="text" class="form-control text-end" name="inverse-start" id="inverse-start-input" placeholder="0x00000000" value="0x02029808"/>
+                            <label for="inverse-start-input">gPokemonStorage Address</label>
+                        </div>
+                    </div>
+                    <div id="inverse-off-block">
+                        <div class="row align-items-center">
+                            <div class="col-6 form-check form-switch mt-2 px-5 text-start">
+                                <input type="checkbox" class="form-check-input" name="inverse-full-range" id="inverse-full-range-check" role="switch" checked onchange="changeFullRange(event.target.checked, 'inverse-')"/>
+                                <label for="inverse-full-range-check" class="form-check-label">Full range</label>
+                            </div>
+                            <div class="col-6 form-floating mt-2">
+                                <input type="number" class="form-control text-end" name="inverse-aslr-offset" id="inverse-aslr-offset" placeholder="000" value="0" min="0" max="124" step="4" disabled/>
+                                <label for="inverse-aslr-offset">ASLR Offset</label>
+                            </div>
+                        </div>
+                        <div class="row align-items-center">
+                            <div class="col-6 form-floating mt-2">
+                                <input type="text" class="form-control text-end" name="inverse-gpksptr" id="inverse-gpksptr-input" placeholder="0x00000000" value="0x02029808" disabled/>
+                                <label for="inverse-gpksptr-input">gPokemonStoragePtr Value</label>
+                            </div>
+                            <div class="col-6 form-check form-switch mt-2">
+                                <button id="inverse-update-aslr-btn" class="btn btn-primary" type="button" onclick="updateASLROffset('inverse-')" disabled>Update ASLR</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-lg my-5"><button class="btn btn-primary" type="submit">Calculate</button></div>
+                <div class="col-12 col-lg h-100 text-cente">
+                    <div id="inverse-result-container" class="border border-1 border-secondary rounded-4 px-0 py-2 fs-4"></div>
+                    <div id="inverse-share-block" hidden>
+                        <div class="input-group mt-3">
+                            <label class="input-group-text" for="inverse-share-url">URL</label>
+                            <input type="text" class="form-control" id="inverse-share-url" value="" readonly/>
+                            <button type="button" class="input-group-append btn btn-primary" id="inverse-share-button" onclick="copyShareUrl('inverse-')">Copy</button>
+                        </div>
+                        <div id="inverse-share-msg" class="share-msg bg-success text-center border rounded mt-1">Copied to Clipboard</div>
+                    </div>
+                </div>
             </form>
             <div id="inverse-msg-container" class="container text-center border border-1 border-secondary rounded-4 mt-4 fs-4 align-items-center">
                 <div id="inverse-msg-text" class="py-2"></div>
@@ -157,10 +157,10 @@
         <footer class="w-100 mt-3 mt-lg-0 d-flex border-top border-secondary flex-row align-items-center justify-content-evenly pt-2 pb-3">
             <div class="d-flex flex-column align-items-center justify-content-evenly">
                 <p class="m-0">Developed by Adrichu00</p>
-				<span>
-                	<a href="https://github.com/Adrichu00/WhichBox/" rel="noopener" target="_blank" title="Source Code">Source Code</a> |
-					<a href="https://adrichu00.github.io/WhichBox/whichbox_local_version.zip" download="whichbox_local_version.zip" target="_blank">Download Local Version</a>
-				</span>
+                <span>
+                    <a href="https://github.com/Adrichu00/WhichBox/" rel="noopener" target="_blank" title="Source Code">Source Code</a> |
+                    <a href="https://adrichu00.github.io/WhichBox/whichbox_local_version.zip" download="whichbox_local_version.zip" target="_blank">Download Local Version</a>
+                </span>
             </div>
         </footer>
     </body>

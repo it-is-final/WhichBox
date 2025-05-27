@@ -17,10 +17,10 @@ let current_info_containers_bg = new Map();
 
 
 class FormValidationError extends Error {
-	constructor(message) {
-		super(message);
-		this.name = "FormValidationError";
-	}
+    constructor(message) {
+        super(message);
+        this.name = "FormValidationError";
+    }
 }
 
 
@@ -128,13 +128,13 @@ function displayMsg(msg, bg, selector_prefix) {
 
 
 function clearMsg(selector_prefix) {
-	selector_prefix ??= "";
-	let element = document.getElementById(selector_prefix + "msg-container");
-	if(current_info_containers_bg.has(selector_prefix)) {
-		element.classList.remove(current_info_containers_bg.get(selector_prefix));
-		current_info_containers_bg.delete(selector_prefix);
-	}
-	element.hidden = true;
+    selector_prefix ??= "";
+    let element = document.getElementById(selector_prefix + "msg-container");
+    if(current_info_containers_bg.has(selector_prefix)) {
+        element.classList.remove(current_info_containers_bg.get(selector_prefix));
+        current_info_containers_bg.delete(selector_prefix);
+    }
+    element.hidden = true;
 }
 
 
@@ -160,10 +160,10 @@ function updateASLROffset(selector_prefix) {
 
 
 function whichbox(offset) {
-	if(offset < -4)
-		return "";
-	if(offset < 0)
-		return "Box 1 - Slot 1 (-" + formatToHex(-offset, 2, "0x") + ")";
+    if(offset < -4)
+        return "";
+    if(offset < 0)
+        return "Box 1 - Slot 1 (-" + formatToHex(-offset, 2, "0x") + ")";
     box = Math.floor(offset / 2400) + 1;
     offset %= 2400;
     slot = Math.floor(offset / 80) + 1;
@@ -178,125 +178,125 @@ function whichaddr(start, box, slot) {
 
 
 function validateFormDiff(diff) {
-	if(diff < 0 || diff >= MAX_DIFF)
-		throw new FormValidationError("Outside the PokemonStorage structure");
+    if(diff < 0 || diff >= MAX_DIFF)
+        throw new FormValidationError("Outside the PokemonStorage structure");
 }
 
 
 function parseTextNumber(num) {
-	if(num.match(/^[+\-]?(\d+|0x[\da-f]+|0o[0-8]+|0b[01]+)$/i) == null)
-		return NaN;
-	return parseInt(num);
+    if(num.match(/^[+\-]?(\d+|0x[\da-f]+|0o[0-8]+|0b[01]+)$/i) == null)
+        return NaN;
+    return parseInt(num);
 }
 
 
 function parseWhichBoxFormData(data) {
-	let result = { game: data.get("game") };
-	if(isNaN(result.start = parseTextNumber(data.get("start"))))
-		throw new FormValidationError("Invalid start value");
-	if(isNaN(result.offset = parseTextNumber(data.get("offset"))))
-		throw new FormValidationError("Invalid address value");
-	result.start &= ADDRESS_MASK;
-	result.offset &= ADDRESS_MASK;
-	result.diff = result.offset - result.start;
-	if(result.game != "RS") {
-		result.full_range = !!data.get("full-range")
-		if(result.full_range) {
-			validateFormDiff(result.diff_end = result.diff);
-			validateFormDiff(result.diff -= MAX_ASLR);
-		} else {
-			if(isNaN(result.aslr_offset = parseInt(data.get("aslr-offset"))))
-				throw new FormValidationError("Invalid ASLR offset value");
-			validateFormDiff(result.diff -= result.aslr_offset);
-		}
-	} else {
-		validateFormDiff(result.diff);
-	}
-	return result;
+    let result = { game: data.get("game") };
+    if(isNaN(result.start = parseTextNumber(data.get("start"))))
+        throw new FormValidationError("Invalid start value");
+    if(isNaN(result.offset = parseTextNumber(data.get("offset"))))
+        throw new FormValidationError("Invalid address value");
+    result.start &= ADDRESS_MASK;
+    result.offset &= ADDRESS_MASK;
+    result.diff = result.offset - result.start;
+    if(result.game != "RS") {
+        result.full_range = !!data.get("full-range")
+        if(result.full_range) {
+            validateFormDiff(result.diff_end = result.diff);
+            validateFormDiff(result.diff -= MAX_ASLR);
+        } else {
+            if(isNaN(result.aslr_offset = parseInt(data.get("aslr-offset"))))
+                throw new FormValidationError("Invalid ASLR offset value");
+            validateFormDiff(result.diff -= result.aslr_offset);
+        }
+    } else {
+        validateFormDiff(result.diff);
+    }
+    return result;
 }
 
 
 function parseWhichAddressFormData(data) {
-	let result = { game: data.get("inverse-game") };
-	if(isNaN(result.start = parseTextNumber(data.get("inverse-start"))))
-		throw new FormValidationError("Invalid start value");
-	if(isNaN(result.box = parseInt(data.get("inverse-box"))))
-		throw new FormValidationError("Invalid box value");
-	if(isNaN(result.slot = parseInt(data.get("inverse-slot"))))
-		throw new FormValidationError("Invalid slot value");
-	if(
-		result.game != "RS" &&
-		!(result.full_range = !!data.get("inverse-full-range")) &&
-		isNaN(result.aslr_offset = parseInt(data.get("inverse-aslr-offset")))
-	)
-		throw new FormValidationError("Invalid ASLR offset value");
-	return result;
+    let result = { game: data.get("inverse-game") };
+    if(isNaN(result.start = parseTextNumber(data.get("inverse-start"))))
+        throw new FormValidationError("Invalid start value");
+    if(isNaN(result.box = parseInt(data.get("inverse-box"))))
+        throw new FormValidationError("Invalid box value");
+    if(isNaN(result.slot = parseInt(data.get("inverse-slot"))))
+        throw new FormValidationError("Invalid slot value");
+    if(
+        result.game != "RS" &&
+        !(result.full_range = !!data.get("inverse-full-range")) &&
+        isNaN(result.aslr_offset = parseInt(data.get("inverse-aslr-offset")))
+    )
+        throw new FormValidationError("Invalid ASLR offset value");
+    return result;
 }
 
 
 function clearShareData(selector_prefix) {
-	selector_prefix ??= "";
-	document.getElementById(selector_prefix + "share-block").hidden = true;
-	document.getElementById(selector_prefix + "share-url").value = "";
+    selector_prefix ??= "";
+    document.getElementById(selector_prefix + "share-block").hidden = true;
+    document.getElementById(selector_prefix + "share-url").value = "";
 }
 
 
 function setWhichBoxShareData(data) {
-	let url = new URL(document.location.pathname, document.location.origin);
-	let game = data.get("game");
-	url.searchParams.set("mode", "whichbox");
-	url.searchParams.set("game", game);
-	url.searchParams.set("start", data.get("start"));
-	url.searchParams.set("address", data.get("offset"));
-	if(START_DATA[game].has_aslr) {
-		let full_range;
-		url.searchParams.set("full-range", full_range = !!data.get("full-range"));
-		if(!full_range)
-			url.searchParams.set("aslr-offset", data.get("aslr-offset"));
-	}
-	document.getElementById("share-url").value = url.toString();
-	document.getElementById("share-block").hidden = false;
+    let url = new URL(document.location.pathname, document.location.origin);
+    let game = data.get("game");
+    url.searchParams.set("mode", "whichbox");
+    url.searchParams.set("game", game);
+    url.searchParams.set("start", data.get("start"));
+    url.searchParams.set("address", data.get("offset"));
+    if(START_DATA[game].has_aslr) {
+        let full_range;
+        url.searchParams.set("full-range", full_range = !!data.get("full-range"));
+        if(!full_range)
+            url.searchParams.set("aslr-offset", data.get("aslr-offset"));
+    }
+    document.getElementById("share-url").value = url.toString();
+    document.getElementById("share-block").hidden = false;
 }
 
 
 function setWhichAddressShareData(data) {
-	let url = new URL(document.location.pathname, document.location.origin);
-	let game = data.get("inverse-game");
-	url.searchParams.set("mode", "address");
-	url.searchParams.set("game", game);
-	url.searchParams.set("start", data.get("inverse-start"));
-	url.searchParams.set("box", data.get("inverse-box"));
-	url.searchParams.set("slot", data.get("inverse-slot"));
-	if(START_DATA[game].has_aslr) {
-		let full_range;
-		url.searchParams.set("full-range", full_range = !!data.get("inverse-full-range"));
-		if(!full_range)
-			url.searchParams.set("aslr-offset", data.get("inverse-aslr-offset"));
-	}
-	document.getElementById("inverse-share-url").value = url.toString();
-	document.getElementById("inverse-share-block").hidden = false;
+    let url = new URL(document.location.pathname, document.location.origin);
+    let game = data.get("inverse-game");
+    url.searchParams.set("mode", "address");
+    url.searchParams.set("game", game);
+    url.searchParams.set("start", data.get("inverse-start"));
+    url.searchParams.set("box", data.get("inverse-box"));
+    url.searchParams.set("slot", data.get("inverse-slot"));
+    if(START_DATA[game].has_aslr) {
+        let full_range;
+        url.searchParams.set("full-range", full_range = !!data.get("inverse-full-range"));
+        if(!full_range)
+            url.searchParams.set("aslr-offset", data.get("inverse-aslr-offset"));
+    }
+    document.getElementById("inverse-share-url").value = url.toString();
+    document.getElementById("inverse-share-block").hidden = false;
 }
 
 
 function submitWhichBox(event) {
     event.preventDefault();
     const error_bg = getStoredTheme() == "dark"? "danger": "danger-subtle";
-	let data = new FormData(event.target);
-	let parsed_data;
-	try {
-		parsed_data = parseWhichBoxFormData(data);
-	} catch(error) {
-		if(error.name != "FormValidationError")
-			throw error;
-		displayMsg(error.message, error_bg);
-		clearShareData();
-		return;
-	}
-	let result = whichbox(parsed_data.diff - 4);
-	if(parsed_data.game != "RS" && parsed_data.full_range)
-		result = "From " + result + " to " + whichbox(parsed_data.diff_end - 4);
-	clearMsg();
-	setWhichBoxShareData(data);
+    let data = new FormData(event.target);
+    let parsed_data;
+    try {
+        parsed_data = parseWhichBoxFormData(data);
+    } catch(error) {
+        if(error.name != "FormValidationError")
+            throw error;
+        displayMsg(error.message, error_bg);
+        clearShareData();
+        return;
+    }
+    let result = whichbox(parsed_data.diff - 4);
+    if(parsed_data.game != "RS" && parsed_data.full_range)
+        result = "From " + result + " to " + whichbox(parsed_data.diff_end - 4);
+    clearMsg();
+    setWhichBoxShareData(data);
     document.getElementById("result-container").innerHTML = result;
 }
 
@@ -305,116 +305,116 @@ function submitWhichAddress(event) {
     event.preventDefault();
     const error_bg = getStoredTheme() == "dark"? "danger": "danger-subtle";
     let data = new FormData(event.target);
-	let parsed_data;
-	try {
-		parsed_data = parseWhichAddressFormData(data);
-	} catch(error) {
-		if(error.name != "FormValidationError")
-			throw error;
-		displayMsg(error.message, error_bg, "inverse-");
-		clearShareData("inverse-");
-		return;
-	}
+    let parsed_data;
+    try {
+        parsed_data = parseWhichAddressFormData(data);
+    } catch(error) {
+        if(error.name != "FormValidationError")
+            throw error;
+        displayMsg(error.message, error_bg, "inverse-");
+        clearShareData("inverse-");
+        return;
+    }
     let result;
     if(parsed_data.game == "RS") {
         result = whichaddr(parsed_data.start, parsed_data.box, parsed_data.slot);
     } else {
         if(parsed_data.full_range) {
             result = (
-				whichaddr(parsed_data.start, parsed_data.box, parsed_data.slot) +
-				" - " +
-				whichaddr(parsed_data.start + MAX_ASLR, parsed_data.box, parsed_data.slot)
-			);
+                whichaddr(parsed_data.start, parsed_data.box, parsed_data.slot) +
+                " - " +
+                whichaddr(parsed_data.start + MAX_ASLR, parsed_data.box, parsed_data.slot)
+            );
         } else {
             result = whichaddr(parsed_data.start + parsed_data.aslr_offset, parsed_data.box, parsed_data.slot);
         }
     }
-	clearMsg("inverse-");
-	setWhichAddressShareData(data);
+    clearMsg("inverse-");
+    setWhichAddressShareData(data);
     document.getElementById("inverse-result-container").innerHTML = result;
 }
 
 
 function parseWhichBoxURLParams(params) {
-	let data;
-	let game = params.get("game")?? "Emerald";
-	document.getElementById("select-game").value = game;
-	if(params.has("start") && !isNaN(data = parseTextNumber(params.get("start")))) {
-		document.getElementById("start-input").value = formatToHex(data, 8, "0x");
-	} else if(params.has("gPokemonStorage") && !isNaN(data = parseTextNumber(params.get("gPokemonStorage")))) {
-		document.getElementById("start-input").value = formatToHex(data, 8, "0x");
-	}
-	if(params.has("address") && !isNaN(data = parseTextNumber(params.get("address"))))
-		document.getElementById("address-input").value = formatToHex(data, 8, "0x");
-	if(!START_DATA[game].has_aslr) {
-		document.forms["generator"].requestSubmit();
-		return;
-	}
-	if(!params.has("full-range") || params.get("full-range") != "false") {
-		changeFullRange(true);
-	} else {
-		changeFullRange(false);
-		if(params.has("aslr-offset") && !isNaN(data = parseInt(params.get("aslr-offset")))) {
-			document.getElementById("aslr-offset").value = data;
-		} else if(params.has("gPokemonStoragePtr") && !isNaN(data = parseInt(params.get("gPokemonStoragePtr")))) {
-			document.getElementById("gpksptr-input").value = data;
-			updateASLROffset();
-		}
-	}
-	document.forms["generator"].requestSubmit();
+    let data;
+    let game = params.get("game")?? "Emerald";
+    document.getElementById("select-game").value = game;
+    if(params.has("start") && !isNaN(data = parseTextNumber(params.get("start")))) {
+        document.getElementById("start-input").value = formatToHex(data, 8, "0x");
+    } else if(params.has("gPokemonStorage") && !isNaN(data = parseTextNumber(params.get("gPokemonStorage")))) {
+        document.getElementById("start-input").value = formatToHex(data, 8, "0x");
+    }
+    if(params.has("address") && !isNaN(data = parseTextNumber(params.get("address"))))
+        document.getElementById("address-input").value = formatToHex(data, 8, "0x");
+    if(!START_DATA[game].has_aslr) {
+        document.forms["generator"].requestSubmit();
+        return;
+    }
+    if(!params.has("full-range") || params.get("full-range") != "false") {
+        changeFullRange(true);
+    } else {
+        changeFullRange(false);
+        if(params.has("aslr-offset") && !isNaN(data = parseInt(params.get("aslr-offset")))) {
+            document.getElementById("aslr-offset").value = data;
+        } else if(params.has("gPokemonStoragePtr") && !isNaN(data = parseInt(params.get("gPokemonStoragePtr")))) {
+            document.getElementById("gpksptr-input").value = data;
+            updateASLROffset();
+        }
+    }
+    document.forms["generator"].requestSubmit();
 }
 
 
 function parseWhichAddressURLParams(params) {
-	let data;
-	let game = params.get("game")?? "Emerald";
-	document.getElementById("inverse-select-game").value = game;
-	if(params.has("start") && !isNaN(data = parseTextNumber(params.get("start")))) {
-		document.getElementById("inverse-start-input").value = formatToHex(data, 8, "0x");
-	} else if(params.has("gPokemonStorage") && !isNaN(data = parseTextNumber(params.get("gPokemonStorage")))) {
-		document.getElementById("inverse-start-input").value = formatToHex(data, 8, "0x");
-	}
-	if(params.has("box") && !isNaN(data = parseInt(params.get("box"))))
-		document.getElementById("inverse-box-input").value = data;
-	if(params.has("slot") && !isNaN(data = parseInt(params.get("slot"))))
-		document.getElementById("inverse-slot-input").value = data;
-	if(!START_DATA[game].has_aslr) {
-		document.forms["inverse-generator"].requestSubmit();
-		return;
-	}
-	if(!params.has("full-range") || params.get("full-range") != "false") {
-		changeFullRange(true, "inverse-");
-	} else {
-		changeFullRange(false, "inverse-");
-		if(params.has("aslr-offset") && !isNaN(data = parseInt(params.get("aslr-offset")))) {
-			document.getElementById("inverse-aslr-offset").value = data;
-		} else if(params.has("gPokemonStoragePtr") && !isNaN(data = parseInt(params.get("gPokemonStoragePtr")))) {
-			document.getElementById("inverse-gpksptr-input").value = data;
-			updateASLROffset("inverse-");
-		}
-	}
-	document.forms["inverse-generator"].requestSubmit();
+    let data;
+    let game = params.get("game")?? "Emerald";
+    document.getElementById("inverse-select-game").value = game;
+    if(params.has("start") && !isNaN(data = parseTextNumber(params.get("start")))) {
+        document.getElementById("inverse-start-input").value = formatToHex(data, 8, "0x");
+    } else if(params.has("gPokemonStorage") && !isNaN(data = parseTextNumber(params.get("gPokemonStorage")))) {
+        document.getElementById("inverse-start-input").value = formatToHex(data, 8, "0x");
+    }
+    if(params.has("box") && !isNaN(data = parseInt(params.get("box"))))
+        document.getElementById("inverse-box-input").value = data;
+    if(params.has("slot") && !isNaN(data = parseInt(params.get("slot"))))
+        document.getElementById("inverse-slot-input").value = data;
+    if(!START_DATA[game].has_aslr) {
+        document.forms["inverse-generator"].requestSubmit();
+        return;
+    }
+    if(!params.has("full-range") || params.get("full-range") != "false") {
+        changeFullRange(true, "inverse-");
+    } else {
+        changeFullRange(false, "inverse-");
+        if(params.has("aslr-offset") && !isNaN(data = parseInt(params.get("aslr-offset")))) {
+            document.getElementById("inverse-aslr-offset").value = data;
+        } else if(params.has("gPokemonStoragePtr") && !isNaN(data = parseInt(params.get("gPokemonStoragePtr")))) {
+            document.getElementById("inverse-gpksptr-input").value = data;
+            updateASLROffset("inverse-");
+        }
+    }
+    document.forms["inverse-generator"].requestSubmit();
 }
 
 
 function parseURLParams() {
-	let params = new URLSearchParams(document.location.search);
-	if(params.size == 0)
-		return;
-	if(params.has("game") && !(params.get("game") in START_DATA))
-		return;
-	if(params.has("mode") && params.get("mode") == "address")
-		parseWhichAddressURLParams(params);
-	else
-		parseWhichBoxURLParams(params);
+    let params = new URLSearchParams(document.location.search);
+    if(params.size == 0)
+        return;
+    if(params.has("game") && !(params.get("game") in START_DATA))
+        return;
+    if(params.has("mode") && params.get("mode") == "address")
+        parseWhichAddressURLParams(params);
+    else
+        parseWhichBoxURLParams(params);
 }
 
 function copyShareUrl(selector_prefix) {
-	selector_prefix ??= "";
-	navigator.clipboard.writeText(document.getElementById(selector_prefix + "share-url").value);
-	let element = document.getElementById(selector_prefix + "share-msg");
-	element.classList.toggle("show-msg");
-	setTimeout((element) => element.classList.toggle("show-msg"), 5000, element);
+    selector_prefix ??= "";
+    navigator.clipboard.writeText(document.getElementById(selector_prefix + "share-url").value);
+    let element = document.getElementById(selector_prefix + "share-msg");
+    element.classList.toggle("show-msg");
+    setTimeout((element) => element.classList.toggle("show-msg"), 5000, element);
 }
 
 
@@ -422,5 +422,5 @@ document.addEventListener("DOMContentLoaded", () => {
     loadDefaultTheme();
     document.getElementById("msg-container").hidden = true;
     document.getElementById("inverse-msg-container").hidden = true;
-	parseURLParams();
+    parseURLParams();
 });
