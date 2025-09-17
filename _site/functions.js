@@ -229,6 +229,7 @@ function parseWhichAddressFormData(data) {
         throw new FormValidationError("Invalid slot value");
     if(
         result.game != "RS" &&
+        result.game != "RS-JP" &&
         !(result.full_range = !!data.get("inverse-full-range")) &&
         isNaN(result.aslr_offset = parseInt(data.get("inverse-aslr-offset")))
     )
@@ -296,7 +297,7 @@ function submitWhichBox(event) {
         return;
     }
     let result = whichbox(parsed_data.diff - 4);
-    if(parsed_data.game != "RS" && parsed_data.full_range)
+    if(parsed_data.game != "RS" && parsed_data.game != "RS-JP" && parsed_data.full_range)
         result = "From " + result + " to " + whichbox(parsed_data.diff_end - 4);
     clearMsg();
     setWhichBoxShareData(data);
@@ -319,7 +320,7 @@ function submitWhichAddress(event) {
         return;
     }
     let result;
-    if(parsed_data.game == "RS") {
+    if(parsed_data.game == "RS" || parsed_data.game == "RS-JP") {
         result = whichaddr(parsed_data.start, parsed_data.box, parsed_data.slot);
     } else {
         if(parsed_data.full_range) {
