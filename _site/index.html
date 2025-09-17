@@ -39,9 +39,12 @@
                     <div class="row align-items-center">
                         <div class="col-6 text-start form-floating">
                             <select id="select-game" name="game" class="form-select" aria-label=".form-select-lg" onchange="selectStart(event.target.value)">
-                                <option value="Emerald" selected>Emerald</option>
-                                <option value="FRLG">FRLG</option>
-                                <option value="RS">RS</option>
+                                <option value="Emerald" selected>Emerald (non-JP)</option>
+                                <option value="FRLG">FR/LG (non-JP)</option>
+                                <option value="RS">R/S (non-JP)</option>
+                                <option value="Emerald-JP">Emerald (JP)</option>
+                                <option value="FRLG-JP">FR/LG (JP)</option>
+                                <option value="RS-JP">R/S (JP)</option>
                             </select>
                             <label for="select-game">Game</label>
                         </div>
@@ -104,9 +107,12 @@
                     <div class="row align-items-center">
                         <div class="col-6 form-floating text-start">
                             <select id="inverse-select-game" name="inverse-game" class="form-select" aria-label=".form-select-lg" onchange="selectStart(event.target.value, 'inverse-')">
-                                <option value="Emerald" selected>Emerald</option>
-                                <option value="FRLG">FRLG</option>
-                                <option value="RS">RS</option>
+                                <option value="Emerald" selected>Emerald (non-JP)</option>
+                                <option value="FRLG">FR/LG (non-JP)</option>
+                                <option value="RS">R/S (non-JP)</option>
+                                <option value="Emerald-JP">Emerald (JP)</option>
+                                <option value="FRLG-JP">FR/LG (JP)</option>
+                                <option value="RS-JP">R/S (JP)</option>
                             </select>
                             <label for="inverse-select-game">Game</label>
                         </div>

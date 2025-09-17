@@ -10,7 +10,10 @@ const MAX_DIFF = 4 + (BOX_SIZE + 10) * 14 + MAX_ASLR;
 const START_DATA = {
     "Emerald": {start: "0x02029808", has_aslr: true},
     "FRLG": {start: "0x02029314", has_aslr: true},
-    "RS": {start: "0x020300A0", has_aslr: false}
+    "RS": {start: "0x020300A0", has_aslr: false},
+    "Emerald-JP": {start: "0x020294AC", has_aslr: true},
+    "FRLG-JP": {start: "0x0x0202924C", has_aslr: true},
+    "RS-JP": {start: "0x0202FDBC", has_aslr: false}
 };
 
 let current_info_containers_bg = new Map();
