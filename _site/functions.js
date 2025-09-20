@@ -202,7 +202,7 @@ function parseWhichBoxFormData(data) {
     result.start &= ADDRESS_MASK;
     result.offset &= ADDRESS_MASK;
     result.diff = result.offset - result.start;
-    if(result.game != "RS") {
+    if(result.game != "RS" && result.game != "RS-JP") {
         result.full_range = !!data.get("full-range")
         if(result.full_range) {
             validateFormDiff(result.diff_end = result.diff);
