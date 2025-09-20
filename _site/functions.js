@@ -12,7 +12,7 @@ const START_DATA = {
     "FRLG": {start: "0x02029314", has_aslr: true},
     "RS": {start: "0x020300A0", has_aslr: false},
     "Emerald-JP": {start: "0x020294AC", has_aslr: true},
-    "FRLG-JP": {start: "0x0x0202924C", has_aslr: true},
+    "FRLG-JP": {start: "0x0202924C", has_aslr: true},
     "RS-JP": {start: "0x0202FDBC", has_aslr: false}
 };
 
